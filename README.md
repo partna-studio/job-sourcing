@@ -1,2 +1,2 @@
-# job-sourcing
+# Job Sourcing
 Simple Tool | Source &amp; Score Jobs | N8N Template Base
