@@ -24,7 +24,7 @@ service-account*.json
 downloads/
 data/
 *.pdf
-*.csv
+
 *.xlsx
 
 # Logs
