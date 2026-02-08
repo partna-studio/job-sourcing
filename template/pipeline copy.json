@@ -1,0 +1,62 @@
+{
+    "name": "LinkedIn Job Search Auto Match",
+    "steps": [
+        {
+            "name": "AI Job Matcher",
+            "type": "@n8n/n8n-nodes-langchain.agent",
+            "parameters": {
+                "promptType": "define",
+                "text": "=Hi, you are a helpful job matcher. Analyze the resume and job description to determine a match score. Do NOT write a cover letter. Your output MUST be a valid JSON object matching this structure exactly:\n\n{\n  \"airtable_dashboard\": {\n    \"summary_metrics\": [\n      { \"title\": \"Total Jobs Analyzed\", \"calculation_logic\": \"Count of all records pulled\", \"timestamp_ref\": \"03:10\" },\n      { \"title\": \"Average Final Job Score\", \"calculation_logic\": \"Mean of all Final Scores\", \"timestamp_ref\": \"03:15\" },\n      { \"title\": \"Top Scoring Jobs\", \"calculation_logic\": \"Count of jobs exceeding threshold\", \"timestamp_ref\": \"03:19\" }\n    ],\n    \"visualizations\": [\n      { \"graph_title\": \"Open Roles by Company\", \"graph_type\": \"Bar Chart\", \"axes\": { \"x_axis\": \"Company Name\", \"y_axis\": \"Count of Job IDs\" }, \"timestamp_ref\": \"03:22\" },\n      { \"graph_title\": \"Openings by Experience Level\", \"graph_type\": \"Bar or Pie Chart\", \"parameters\": [\"Junior\", \"Middle\", \"Senior\", \"Director\"], \"timestamp_ref\": \"03:27\" },\n      { \"graph_title\": \"Jobs Posted per Day\", \"graph_type\": \"Timeline\", \"axes\": { \"x_axis\": \"Publication Date\", \"y_axis\": \"Count of Records\" }, \"timestamp_ref\": \"03:39\" },\n      { \"graph_title\": \"Top Ranking Skills\", \"graph_type\": \"Word Cloud\", \"parameters\": [\"Python\", \"SQL\", \"AWS\", \"Generative AI\"], \"timestamp_ref\": \"03:47\" }\n    ],\n    \"data_table_schema\": {\n      \"metadata_fields\": [\"Job ID\", \"Publication Date\", \"LinkedIn Company Name\", \"Job Title\", \"Job Link\"],\n      \"categorization_fields\": [\"Experience Level\", \"Required Skills\", \"Responsibilities\", \"Company Benefits\"],\n      \"scoring_fields_0_100\": [\"Skills Score\", \"Responsibilities Score\", \"Experience Score\", \"Benefits Score\"],\n      \"final_output_fields\": [\"Final Job Score (weighted average)\", \"Remote/Flexible Work status\"],\n      \"data_source_pipeline\": \"LinkedIn > RSS.app > n8n > Airtable\",\n      \"timestamp_ref\": \"02:19\"\n    }\n  }\n}\n\njob_description: {{ $json.description }}\nmy_resume: {{ $('Extract Text from Resume').item.json.text }}"
+            },
+            "uses": "AI Model (OpenAI/Gemini)",
+            "utils": "../utils/lchain.py",
+            "next": "Parse AI Response"
+        },
+        {
+            "name": "AI Model (OpenAI/Gemini)",
+            "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+            "parameters": {
+                "model": "gpt-4-mini"
+            },
+            "credentials": "openAiApi",
+            "utils": "../utils/lchain.py"
+        },
+        {
+            "name": "Parse AI Response",
+            "type": "n8n-nodes-base.set",
+            "parameters": {
+                "mode": "raw",
+                "jsonOutput": "={{ $json.output.replaceAll(/```(?:json)?/g, \"\") }}\n",
+                "includeOtherFields": true
+            },
+            "utils": "../utils/parser.py",
+            "next": "Save to Google Sheets"
+        },
+        {
+            "name": "Save to Google Sheets",
+            "type": "n8n-nodes-base.googleSheets",
+            "parameters": {
+                "operation": "appendOrUpdate",
+                "documentId": "YOUR_SHEET_ID",
+                "sheetName": "gid=0",
+                "columns": {
+                    "mappingMode": "defineBelow",
+                    "matchingColumns": [
+                        "link"
+                    ],
+                    "value": {
+                        "Title": "={{ $('Format Job Data').item.json.title }}",
+                        "Company": "={{ $('Format Job Data').item.json.company }}",
+                        "Location": "={{ $('Format Job Data').item.json.location }}",
+                        "link": "={{ $('Format Job Data').item.json.applyLink }}",
+                        "score": "={{ $json.airtable_dashboard.data_table_schema.final_output_fields[0] }}",
+                        "description": "={{ $('Format Job Data').item.json.description }}"
+                    }
+                }
+            },
+            "credentials": "googleSheetsOAuth2Api",
+            "utils": "../utils/gdrive.py",
+            "next": "Loop Over Jobs"
+        }
+    ]
+}

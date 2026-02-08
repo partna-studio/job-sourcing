@@ -13,12 +13,12 @@ Track your implementation progress for the LinkedIn Job Search Auto Match pipeli
 - [X] Split Job Links
 - [X] Loop Over Jobs
 - [X] Wait Between Requests
-- [ ] Fetch Job Page
-- [ ] Parse Job Details
-- [ ] Format Job Data
-- [ ] AI Job Matcher
-- [ ] AI Model (OpenAI/Gemini)
-- [ ] Parse AI Response
+- [X] Fetch Job Page
+- [X] Parse Job Details
+- [X] Format Job Data
+- [X] AI Job Matcher
+- [X] AI Model (OpenAI/Gemini)
+- [X] Parse AI Response
 - [ ] Save to Google Sheets
 
 ---

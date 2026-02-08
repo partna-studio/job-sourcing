@@ -7,7 +7,7 @@ import requests
 from bs4 import BeautifulSoup
 import time
 
-async def scrape_website(url, timeout=10000, use_playwright=False):
+async def fetch_website(url, timeout=10000, use_playwright=False):
     """
     Scrape content from a website using BeautifulSoup (via requests).
     Playwright has been removed as a workaround for Windows loop issues.
@@ -46,7 +46,7 @@ async def scrape_website(url, timeout=10000, use_playwright=False):
     except Exception as e:
         raise Exception(f"Error scraping {url}: {str(e)}")
 
-def generate_linkedin_uri(keyword="", location="", experience_level="", remote="", job_type="", easy_apply=""):
+def linkedin_generate_uri(keyword="", location="", experience_level="", remote="", job_type="", easy_apply=""):
     """
     Generate a LinkedIn job search URL based on the provided parameters.
     """
@@ -90,35 +90,49 @@ def generate_linkedin_uri(keyword="", location="", experience_level="", remote="
 
     return url
 
-def generate_all_linkedin_urls(keyword):
+
+
+def generate_linkedin_urls(keyword, params):
     """
     Generate all possible LinkedIn job search URLs for a given keyword.
+    
+    Args:
+        keyword (str): Job search keyword
+        params (dict): Custom search parameters. Defaults to DEFAULT_LINKEDIN_SEARCH_PARAMS
     """
-    locations = ["New York", "Atlanta", "Washington DC", "Los Angeles", "Chicago"]
-    experience_levels = ["Internship", "Entry level", "Associate", "Mid-Senior level", "Director", "Executive"]
-    remotes = ["Remote", "Hybrid", "On-Site"]
-    job_types = ["Full-time", "Part-time", "Contract"]
-    easy_applies = ["", "true"]
-
-    combos = list(itertools.product(locations, experience_levels, remotes, job_types, easy_applies))
+    
+    combos = list(itertools.product(
+        params["location"],
+        params["experience_level"],
+        params["remote"],
+        params["job_type"],
+        params["easy_apply"]
+    ))
+    
     data = []
     for loc, exp, rem, jt, ea in combos:
-        url = generate_linkedin_uri(keyword, loc, exp, rem, jt, ea)
+        url = linkedin_generate_uri(keyword, loc, exp, rem, jt, ea)
         data.append({
-            'keyword': keyword, 'location': loc, 'experience_level': exp,
-            'remote': rem, 'job_type': jt, 'easy_apply': ea, 'url': url
+            'keyword': keyword,
+            'location': loc,
+            'experience_level': exp,
+            'remote': rem,
+            'job_type': jt,
+            'easy_apply': ea,
+            'url': url
         })
     return pd.DataFrame(data)
 
-def generate_all_urls_for_keywords(keywords):
+def generate_keyword_urls(keywords, DEFAULT_LINKEDIN_SEARCH_PARAMS):
     """
     Generate LinkedIn URLs for multiple keywords.
     """
-    dfs = [generate_all_linkedin_urls(kw) for kw in keywords]
+    
+    dfs = [generate_linkedin_urls(kw, DEFAULT_LINKEDIN_SEARCH_PARAMS) for kw in keywords]
     return pd.concat(dfs, ignore_index=True) if dfs else pd.DataFrame()
 
 if __name__ == "__main__":
     async def main():
-        content = await scrape_website("https://example.com")
+        content = await fetch_website("https://example.com")
         print(content[:100])
     asyncio.run(main())

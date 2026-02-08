@@ -1,0 +1,98 @@
+{
+  "airtable_dashboard": {
+    "summary_metrics": [
+      {
+        "title": "Total Jobs Analyzed",
+        "calculation_logic": "Count of all records pulled",
+        "needs_automation" : false,
+        "timestamp_ref": "03:10"
+      },
+      {
+        "title": "Average Final Job Score",
+        "calculation_logic": "Mean of all Final Scores",
+        "needs_automation" : false,
+        "timestamp_ref": "03:15"
+      },
+      {
+        "title": "Top Scoring Jobs",
+        "calculation_logic": "Count of jobs exceeding threshold",
+        "needs_automation" : false,
+        "timestamp_ref": "03:19"
+      }
+    ],
+    "visualizations": [
+      {
+        "graph_title": "Open Roles by Company",
+        "graph_type": "Bar Chart",
+        "axes": {
+          "x_axis": "Company Name",
+          "y_axis": "Count of Job IDs"
+        },
+        "needs_automation" : false,
+        "timestamp_ref": "03:22"
+      },
+      {
+        "graph_title": "Openings by Experience Level",
+        "graph_type": "Bar or Pie Chart",
+        "parameters": [
+          "Junior",
+          "Middle",
+          "Senior",
+          "Director"
+        ],
+        "needs_automation" : true,
+        "timestamp_ref": "03:27"
+      },
+      {
+        "graph_title": "Jobs Posted per Day",
+        "graph_type": "Timeline",
+        "axes": {
+          "x_axis": "Publication Date",
+          "y_axis": "Count of Records"
+        },
+        "needs_automation" : true,
+        "timestamp_ref": "03:39"
+      },
+      {
+        "graph_title": "Top Ranking Skills",
+        "graph_type": "Word Cloud",
+        "parameters": [
+          "Python",
+          "SQL",
+          "AWS",
+          "Generative AI"
+        ],
+        "needs_automation" : true,
+        "timestamp_ref": "03:47"
+      }
+    ],
+    "data_table_schema": {
+      "metadata_fields": [
+        "Job ID",
+        "Publication Date",
+        "LinkedIn Company Name",
+        "Job Title",
+        "Job Link"
+      ],
+      "categorization_fields": [
+        "Experience Level",
+        "Required Skills",
+        "Responsibilities",
+        "Company Benefits"
+      ],
+      "scoring_fields_0_100": [
+        "Skills Score",
+        "Responsibilities Score",
+        "Experience Score",
+        "Benefits Score"
+      ],
+      "final_output_fields": [
+        "Final Job Score (weighted average)",
+        "Remote/Flexible Work status"
+      ],
+      "data_source_pipeline": "LinkedIn > RSS.app > n8n > Airtable",
+      "needs_automation": true,
+      "timestamp_ref": "02:19"
+    }
+  }
+}

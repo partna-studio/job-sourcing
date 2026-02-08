@@ -1,0 +1,66 @@
+__JOSHUA BERNADEL__
+
+929\.294\.9831 | [bernadeljoshua2@gmail\.com](mailto:bernadeljoshua2@gmail.com) | New York, NY | [LinkedIn](https://www.linkedin.com/in/d-bernadel/) 
+
+![](data:image/x-wmf;base64,AQAJAAADKgMAAAAAAQMAAAAABAAAAAMBCAAFAAAACwIAAAAABQAAAAwCAgB9BQMAAAAeAAQAAAAHAQQABAAAAAcBBAABAwAAQQsgAMwAAgB9BQAAAAACAH0FAAAAACgAAAB9BQAAAgAAAAEABAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA////AMPDwwCIiIgAf39/AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAjMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMw/wQAAAAnAf//AwAAAAAA)__PROFESSIONAL EXPERIENCE__
+
+__Technical Consultant                                                                                                                                        August 2025 – Present__
+
+Partna Studio / New York, NY*	*
+
+- Leads the end\-to\-end design, build, and launch of an agentic AI automotive software platform, translating large volumes of unstructured vehicle, pricing, and market data into autonomous sourcing, evaluation, and decision\-support workflows\. 
+- Spearheads and manages the engineering and deployment of 20\+ model evaluations and validation cycles across open\-source and fine\-tuned LLMs to ensure system accuracy, reliability, explainability, and data privacy prior to deployment\. 
+- Engineered and deployed three \(3\) deep agents, 10\+ supervisory agents, and 20\+ supporting tools using ReAct and advanced agent frameworks, partnering across product, engineering, and design to deliver a scalable, production\-ready solution\. 
+
+__Associate Product Manager 							                   December 2024 – August 2025 __
+
+Accenture / New York, NY
+
+- Owned product delivery for an agent\-based data and analytics tool with integrated dashboards, improving inventory remediation accuracy and enabling faster, higher\-confidence operational decision\-making for enterprise stakeholders across key accounts\. 
+- Prepared, curated, and governed enterprise\-scale datasets, ensuring data integrity, security, and ethical AI usage while supporting model training, testing, and ongoing product iterations for diamond clients in amongst supply chain markets\. 
+- Established partnerships with senior stakeholders cross\-functionally with engineering, design, and business teams to define product requirements, prioritize backlogs, align roadmaps to client strategy, and deliver features on schedule within <6 months\. 
+
+__Senior Analyst – Technical Project & Program Manager	          		 		         June 2023 – December 2024__
+
+Accenture / New York, NY
+
+- Led the end\-to\-end implementation of an agent\-based analytics and workflow platform across a large communications client, owning program planning, delivery execution, and cross\-functional coordination while managing complex technical concepts\. 
+- Drove over $3M in cost savings by identifying delivery inefficiencies, restructuring program governance, and optimizing execution across concurrent technology initiatives, while managing dependencies, risks, and escalations for individual client\. 
+- Served as the central point of accountability between engineering, product, and business stakeholders, communicating GTM initiatives, technical roadmaps, and delivery progress during recurring executive forums, enabling faster decision\-making\. 
+
+__Business Analyst							 			 July 2021 – June 2023__
+
+Accenture / New York, NY
+
+- Partnered with program leadership and client stakeholders across multiple workstreams to diagnose enterprise reporting and process gaps, translating loosely defined business problems into structured requirements, KPIs, and phased delivery plans\. 
+- Authored comprehensive requirements and functional design documentation for a new enterprise reporting tool, consolidating input from 15–20 stakeholders and multiple data sources to improve data accuracy, performance, and reduce ad\-hoc spending\. 
+- Designed and delivered enablement workshops, playbooks, and onboarding materials for 50\+ users, establishing standardized workflows and adoption frameworks that accelerated tool uptake, reduced onboarding time, and supported usage post\-launch\.
+
+__EDUCATION	__
+
+__Bachelor of Science in Industrial & Labor Relations __/ Cornell University    	   	   
+
+__PROFESSIONAL DEVELOPMENT & CERTIFICATIONS	__
+
+__Capital IQ Pro 101 Certification __/ S&P Global Market Intelligence    	__January 2024__     
+
+
+__Business in the Metaverse Economy Certification __/ Wharton Online 	 __January 2023__
+
+__Data Analysis with Python Certificate__/ IBM__ 	      July 2022__  
+  
+__Data Science Certification __/ IBM 	       __July 2022__
+
+__Virtual Reality & Augmented Reality Certificate __/ Massachusetts Institute of Technology	       __May 2022__  
+
+
+![](data:image/x-wmf;base64,AQAJAAADKgMAAAAAAQMAAAAABAAAAAMBCAAFAAAACwIAAAAABQAAAAwCAgB9BQMAAAAeAAQAAAAHAQQABAAAAAcBBAABAwAAQQsgAMwAAgB9BQAAAAACAH0FAAAAACgAAAB9BQAAAgAAAAEABAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA////AMPDwwCIiIgAf39/AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAjMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMw/wQAAAAnAf//AwAAAAAA)__SKILLS__
+
+__Strategy & Ownership:__ Financial Analysis & Reporting – Executive Communications – Change Management 
+
+__Software & Tools: __SQL – HTML – CSS – Figma – Adobe Creative Suite – Jira – TypeScript – Confluence – LLM Platforms 
+
+__Product Management: __AI Product Management – Solution Evaluation – Data Informed Decision Making – User Research \(UX\)
+
+ 
+
