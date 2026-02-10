@@ -23,6 +23,7 @@ service-account*.json
 # Downloaded Data & Artifacts
 downloads/
 data/
+other/data/
 *.pdf
 *.csv
 *.xlsx
