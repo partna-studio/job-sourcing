@@ -1,4 +1,10 @@
 
+from pathlib import Path
+from dotenv import load_dotenv
+# Load environment variables from .env file in the same directory
+env_path = Path(__file__).parent / '.env'
+load_dotenv(dotenv_path=env_path)
+
 from digistudio.crawlers.linkedin import batch_urls, save_metadata, fetch_jobs
 from digistudio.processing.jobs import process_jobs, categorize_jobs 
 from digistudio.processing.upload import load_collection, upload_dataframe
