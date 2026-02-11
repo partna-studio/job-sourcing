@@ -23,10 +23,9 @@ def job_sourcing_pipeline(keywords_full, minimum_yearly_salary, job_experience_t
     API_BASE_URL = 'https://stupendous-choux-58c6b9.netlify.app/.netlify/functions/jobs'
 
     all_jobs = batch_urls(keywords_full, DEFAULT_LINKEDIN_SEARCH_PARAMS)
-    return all_jobs
     upload_dataframe(all_jobs, "jobs-full")
     data, failed = fetch_jobs(all_jobs, API_BASE_URL)
-    data = save_metadata(data)
+    data = save_metadata(data) #add collection_name as parameter
     data = load_collection("jobs")
     jobs = process_jobs(data, minimum_yearly_salary, job_experience_threshold_years, resume)
     output = categorize_jobs(jobs)
@@ -68,7 +67,7 @@ def jobs_endpoint():
     thread.start()
 
     # Return a placeholder resultendaited handling using a placeholder result
-    return jsonify({"placeholder": "Job processing started"}), 202
+    return jsonify({"status": "processing_started", "result": job_results}), 202
 
 if __name__ == '__main__':
     app.run(debug=True, port=5000)
