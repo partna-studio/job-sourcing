@@ -15,6 +15,7 @@ import pandas as pd
 from flask import Flask, request, jsonify
 from flask_cors import CORS
 import threading
+import uuid
 
 def job_sourcing_pipeline(keywords_full, minimum_yearly_salary, job_experience_threshold_years, resume_path):
     resume = docx_markdown(resume_path)
@@ -66,8 +67,8 @@ def jobs_endpoint():
     thread.daemon = True  # Make thread a daemon so it doesn't prevent program exit
     thread.start()
 
-            # Return a placeholder resultendaited handling using a placeholder result
-            return jsonify({"placeholder": "Job processing started"}), 202
+    # Return a placeholder resultendaited handling using a placeholder result
+    return jsonify({"placeholder": "Job processing started"}), 202
 
 if __name__ == '__main__':
     app.run(debug=True, port=5000)
