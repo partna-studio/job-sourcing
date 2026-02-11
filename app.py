@@ -22,6 +22,7 @@ def job_sourcing_pipeline(keywords_full, minimum_yearly_salary, job_experience_t
     API_BASE_URL = 'https://stupendous-choux-58c6b9.netlify.app/.netlify/functions/jobs'
 
     all_jobs = batch_urls(keywords_full, DEFAULT_LINKEDIN_SEARCH_PARAMS)
+    return all_jobs
     upload_dataframe(all_jobs, "jobs-full")
     data, failed = fetch_jobs(all_jobs, API_BASE_URL)
     data = save_metadata(data)
@@ -42,8 +43,9 @@ def run_pipeline(data):
 
     print("Starting pipeline...")
     try:
-        job_sourcing_pipeline(keywords_full, minimum_yearly_salary, job_experience_threshold_years, resume_path)
+        result = job_sourcing_pipeline(keywords_full, minimum_yearly_salary, job_experience_threshold_years, resume_path)
         print("Pipeline finished successfully.")
+        return result
     except Exception as e:
         print(f"Pipeline failed: {e}")
 
@@ -53,10 +55,19 @@ def jobs_endpoint():
     if not data:
         return jsonify({"error": "No data provided"}), 400
     
-    thread = threading.Thread(target=run_pipeline, args=(data,))
+    # Create a dictionary to store results
+    job_results = {}
+    job_id = str(uuid.uuid4())
+
+    def run_with_results():
+        job_results[job_id] = run_pipeline(data)
+
+    thread = threading.Thread(target=run_with_results)
+    thread.daemon = True  # Make thread a daemon so it doesn't prevent program exit
     thread.start()
-    
-    return jsonify({"status": "processing_started"}), 202
+
+            # Return a placeholder resultendaited handling using a placeholder result
+            return jsonify({"placeholder": "Job processing started"}), 202
 
 if __name__ == '__main__':
     app.run(debug=True, port=5000)
