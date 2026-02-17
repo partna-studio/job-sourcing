@@ -4,7 +4,7 @@ from dotenv import load_dotenv
 # Load environment variables from .env file in the same directory
 env_path = Path(__file__).parent / '.env'
 load_dotenv(dotenv_path=env_path)
-
+import json
 from digistudio.crawlers.linkedin import batch_urls, save_metadata, fetch_jobs
 from digistudio.processing.jobs import process_jobs, categorize_jobs 
 from digistudio.processing.upload import load_collection, upload_dataframe
@@ -38,7 +38,14 @@ def upload_jobs(data,minimum_yearly_salary, job_experience_threshold_years, resu
 
 def job_sourcing_pipeline(keywords_full, minimum_yearly_salary, job_experience_threshold_years, resume_path):
     resume = docx_markdown(resume_path)
-    PARAMS = { "location": ["New York City", "Washington DC", "Los Angeles"], "experience_level": ["Entry level", "Associate", "Mid-Senior level"], "remote": ["Remote", "Hybrid", "On-Site"], "job_type": ["Full-time", "Contract"], "easy_apply": ["", "true"] }
+    # Reduced parameters to avoid combinatorial explosion
+    PARAMS = { 
+        "location": ["New York City"],  # Reduced from 3 to 1
+        "experience_level": ["Entry level", "Mid-Senior level"],  # Reduced from 3 to 2
+        "remote": ["Remote" ,"Hybrid", "On Site"],  # Reduced from 3 to 1
+        "job_type": ["Full-time"],  # Reduced from 2 to 1
+        "easy_apply": [""]  # Removed easy_apply for now
+    }
     URI = 'https://stupendous-choux-58c6b9.netlify.app/.netlify/functions/jobs'
 
     data = batch_and_fetch(keywords_full, PARAMS, URI)
@@ -87,4 +94,22 @@ def jobs_endpoint():
     return jsonify({"status": "processing_started", "result": job_results}), 202
 
 if __name__ == '__main__':
-    app.run(debug=True, port=5000)
+    import pandas as pd
+    import requests
+    import json
+
+    keywords_df = pd.read_csv("job-sourcing/other/text/keywords.csv")
+    keywords_full = keywords_df['keyword'].tolist()[0:7]
+
+    job_experience_threshold_years = 4.5
+    minimum_yearly_salary = 96000
+    resume_path = "job-sourcing/other/text/resume.docx"
+    url = "http://localhost:5000/api/jobs/"
+    payload = {
+    "keywords": keywords_full,
+    "min_salary": minimum_yearly_salary,
+    "experience": job_experience_threshold_years,
+    "resume_path": resume_path
+    }
+    job_sourcing_pipeline(keywords_full, minimum_yearly_salary, job_experience_threshold_years, resume_path)
+    #app.run(debug=True, port=5000)
