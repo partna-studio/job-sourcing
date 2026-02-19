@@ -7,7 +7,7 @@ load_dotenv(dotenv_path=env_path)
 import json
 from digistudio.crawlers.linkedin import batch_urls, save_metadata, fetch_jobs
 from digistudio.processing.jobs import process_jobs, categorize_jobs 
-from digistudio.processing.upload import load_collection, upload_dataframe
+from digistudio.processing.upload import load_collection, upload_dataframe, upload_dataframe_metadata, upload_dict
 from digistudio.processing.documents import docx_markdown
 from pathlib import Path
 import nest_asyncio
@@ -23,17 +23,19 @@ def batch_and_fetch (keywords, params, uri):
     all_jobs = batch_urls(keywords, params)
     upload_dataframe(all_jobs, "jobs-full")
     data, failed = fetch_jobs(all_jobs, uri)
+    #data = data[0:2]
     return data
 
 def upload_metadata(data):
     data = save_metadata(data) #add collection_name as parameter
-    upload_dataframe(data, "jobs-metadata")
+    upload_dataframe_metadata(data, "jobs-metadata")
     return data
 
 def upload_jobs(data,minimum_yearly_salary, job_experience_threshold_years, resume):
-    jobs = process_jobs(data, minimum_yearly_salary, job_experience_threshold_years, resume)
+    jobs, statsistics = process_jobs(data, minimum_yearly_salary, job_experience_threshold_years, resume)
+    upload_dict(statsistics,'job-board')
     output = categorize_jobs(jobs)
-    upload_dataframe(output, "jobs-display")
+    upload_dict(output, "jobs-display")
     return output
 
 def job_sourcing_pipeline(keywords_full, minimum_yearly_salary, job_experience_threshold_years, resume_path):
@@ -50,7 +52,7 @@ def job_sourcing_pipeline(keywords_full, minimum_yearly_salary, job_experience_t
 
     data = batch_and_fetch(keywords_full, PARAMS, URI)
     data = upload_metadata(data)
-    data = load_collection("jobs-metadata")
+    #data = load_collection("jobs-metadata")
     output = upload_jobs(data, minimum_yearly_salary, job_experience_threshold_years, resume)
     return output
 
@@ -64,13 +66,15 @@ def run_pipeline(data):
     job_experience_threshold_years = data.get('experience', 0)
     resume_path = data.get('resume_path', '')
 
-    print("Starting pipeline...")
+    # Starting pipeline with parameters: keywords_count={len(keywords_full)}, min_salary={minimum_yearly_salary}, experience_threshold={job_experience_threshold_years}, resume_path={resume_path}
+    # Pipeline will process jobs through: batch_and_fetch -> upload_metadata -> upload_jobs
     try:
         result = job_sourcing_pipeline(keywords_full, minimum_yearly_salary, job_experience_threshold_years, resume_path)
-        print("Pipeline finished successfully.")
+        # Pipeline completed successfully. Result contains {len(result) if isinstance(result, list) else 'unknown'} categorized jobs
         return result
     except Exception as e:
-        print(f"Pipeline failed: {e}")
+        # Pipeline failed with error: {str(e)[:100]}... Check logs for full traceback. Parameters: keywords_count={len(keywords_full)}, min_salary={minimum_yearly_salary}, experience_threshold={job_experience_threshold_years}
+        raise
 
 
 @app.route('/api/jobs', methods=['POST'])
@@ -98,6 +102,8 @@ if __name__ == '__main__':
     import requests
     import json
 
+    # DEBUG: This block runs when script is executed directly (not via Flask)
+    # Parameters for direct execution: keywords_count=7, min_salary=96000, experience_threshold=4.5, resume_path=job-sourcing/other/text/resume.docx
     keywords_df = pd.read_csv("job-sourcing/other/text/keywords.csv")
     keywords_full = keywords_df['keyword'].tolist()[0:7]
 
@@ -111,5 +117,6 @@ if __name__ == '__main__':
     "experience": job_experience_threshold_years,
     "resume_path": resume_path
     }
+    # Executing job_sourcing_pipeline directly - this will run silently with no output
     job_sourcing_pipeline(keywords_full, minimum_yearly_salary, job_experience_threshold_years, resume_path)
     #app.run(debug=True, port=5000)

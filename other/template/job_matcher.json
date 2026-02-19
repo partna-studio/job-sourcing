@@ -9,7 +9,7 @@
       },
       {
         "title": "Average Final Job Score",
-        "calculation_logic": "Mean of all Final Scores",
+        "calculation_logic": "Mean of all Final 'High' Scores",
         "needs_automation" : false,
         "timestamp_ref": "03:15"
       },
