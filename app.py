@@ -7,7 +7,8 @@ load_dotenv(dotenv_path=env_path)
 import json
 from digistudio.crawlers.linkedin import batch_urls, save_metadata, fetch_jobs
 from digistudio.processing.jobs import process_jobs, categorize_jobs 
-from digistudio.processing.upload import load_collection, upload_dataframe, upload_dataframe_metadata, upload_dict
+from digistudio.processing.upload import upload_collection
+from digistudio.processing.connections import check_ideal_status
 from digistudio.processing.documents import docx_markdown
 from pathlib import Path
 import nest_asyncio
@@ -19,26 +20,27 @@ import uuid
 
 
 
-def batch_and_fetch (keywords, params, uri):
-    all_jobs = batch_urls(keywords, params)
-    upload_dataframe(all_jobs, "jobs-full")
+def batch_and_fetch (keywords, params, uri, job_limit):
+    all_jobs = batch_urls(keywords, params, job_limit)
+    upload_collection(all_jobs, "jobs-full", 'payload')
     data, failed = fetch_jobs(all_jobs, uri)
     #data = data[0:2]
     return data
 
 def upload_metadata(data):
     data = save_metadata(data) #add collection_name as parameter
-    upload_dataframe_metadata(data, "jobs-metadata")
+    upload_collection(data, "jobs-metadata")
     return data
 
 def upload_jobs(data,minimum_yearly_salary, job_experience_threshold_years, resume):
     jobs, statsistics = process_jobs(data, minimum_yearly_salary, job_experience_threshold_years, resume)
-    upload_dict(statsistics,'job-board')
+    upload_collection(statsistics,'job-board',compare_stats=True)
+    jobs = check_ideal_status(jobs)
     output = categorize_jobs(jobs)
-    upload_dict(output, "jobs-display")
+    upload_collection(output, "jobs-display")
     return output
 
-def job_sourcing_pipeline(keywords_full, minimum_yearly_salary, job_experience_threshold_years, resume_path):
+def job_sourcing_pipeline(keywords_full, minimum_yearly_salary, job_experience_threshold_years, resume_path, job_limit):
     resume = docx_markdown(resume_path)
     # Reduced parameters to avoid combinatorial explosion
     PARAMS = { 
@@ -50,7 +52,7 @@ def job_sourcing_pipeline(keywords_full, minimum_yearly_salary, job_experience_t
     }
     URI = 'https://stupendous-choux-58c6b9.netlify.app/.netlify/functions/jobs'
 
-    data = batch_and_fetch(keywords_full, PARAMS, URI)
+    data = batch_and_fetch(keywords_full, PARAMS, URI, job_limit)
     data = upload_metadata(data)
     #data = load_collection("jobs-metadata")
     output = upload_jobs(data, minimum_yearly_salary, job_experience_threshold_years, resume)
@@ -65,11 +67,12 @@ def run_pipeline(data):
     minimum_yearly_salary = data.get('min_salary', 0)
     job_experience_threshold_years = data.get('experience', 0)
     resume_path = data.get('resume_path', '')
+    job_limit = data.get('job_limit', 10)
 
     # Starting pipeline with parameters: keywords_count={len(keywords_full)}, min_salary={minimum_yearly_salary}, experience_threshold={job_experience_threshold_years}, resume_path={resume_path}
     # Pipeline will process jobs through: batch_and_fetch -> upload_metadata -> upload_jobs
     try:
-        result = job_sourcing_pipeline(keywords_full, minimum_yearly_salary, job_experience_threshold_years, resume_path)
+        result = job_sourcing_pipeline(keywords_full, minimum_yearly_salary, job_experience_threshold_years, resume_path, job_limit)
         # Pipeline completed successfully. Result contains {len(result) if isinstance(result, list) else 'unknown'} categorized jobs
         return result
     except Exception as e:
@@ -110,13 +113,16 @@ if __name__ == '__main__':
     job_experience_threshold_years = 4.5
     minimum_yearly_salary = 96000
     resume_path = "job-sourcing/other/text/resume.docx"
-    url = "http://localhost:5000/api/jobs/"
+    job_limit = 12
+
     payload = {
     "keywords": keywords_full,
     "min_salary": minimum_yearly_salary,
     "experience": job_experience_threshold_years,
-    "resume_path": resume_path
+    "resume_path": resume_path,
+    "job_limit": job_limit,
     }
+
     # Executing job_sourcing_pipeline directly - this will run silently with no output
-    job_sourcing_pipeline(keywords_full, minimum_yearly_salary, job_experience_threshold_years, resume_path)
+    job_sourcing_pipeline(keywords_full, minimum_yearly_salary, job_experience_threshold_years, resume_path, job_limit)
     #app.run(debug=True, port=5000)
