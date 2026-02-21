@@ -1,4 +1,5 @@
 
+import os
 from pathlib import Path
 from dotenv import load_dotenv
 # Load environment variables from .env file in the same directory
@@ -8,8 +9,9 @@ import json
 from digistudio.crawlers.linkedin import batch_urls, save_metadata, fetch_jobs
 from digistudio.processing.jobs import process_jobs, categorize_jobs 
 from digistudio.processing.upload import upload_collection
-from digistudio.processing.connections import check_ideal_status
+from digistudio.processing.connections import check_ideal_status, get_user
 from digistudio.processing.documents import docx_markdown
+from datetime import datetime as dt
 from pathlib import Path
 import nest_asyncio
 import pandas as pd
@@ -18,29 +20,35 @@ from flask_cors import CORS
 import threading
 import uuid
 
-
-
-def batch_and_fetch (keywords, params, uri, job_limit):
+def batch_and_fetch (urn, keywords, params, uri, job_limit):
     all_jobs = batch_urls(keywords, params, job_limit)
-    upload_collection(all_jobs, "jobs-full", 'payload')
+    data_entry = {"id": urn, "jobs": all_jobs, "time": dt.now().isoformat()}
+    upload_collection(data_entry, "jobs-urls", 'jobs', user_id=urn)
     data, failed = fetch_jobs(all_jobs, uri)
     #data = data[0:2]
     return data
 
-def upload_metadata(data):
+def upload_metadata(urn, data):
     data = save_metadata(data) #add collection_name as parameter
-    upload_collection(data, "jobs-metadata")
+    data_entry = {"id": urn, "jobs": data, "time": dt.now().isoformat()}
+    upload_collection(data_entry, "jobs-metadata", 'jobs', user_id=urn)
     return data
 
-def upload_jobs(data,minimum_yearly_salary, job_experience_threshold_years, resume):
+def upload_jobs(urn, data,minimum_yearly_salary, job_experience_threshold_years, resume):
     jobs, statsistics = process_jobs(data, minimum_yearly_salary, job_experience_threshold_years, resume)
-    upload_collection(statsistics,'job-board',compare_stats=True)
-    jobs = check_ideal_status(jobs)
+    data_entry = {"id": urn, "stats": statsistics, "time": dt.now().isoformat()}
+    upload_collection(data_entry, 'job-board', keyword='stats', compare_stats=True, user_id=urn)
+    jobs = check_ideal_status(jobs, urn)
     output = categorize_jobs(jobs)
-    upload_collection(output, "jobs-display")
+    data_entry = {"id": urn, "stats": output, "time": dt.now().isoformat()}
+    upload_collection(data_entry, "jobs-display", keyword='stats', user_id=urn)
     return output
 
 def job_sourcing_pipeline(keywords_full, minimum_yearly_salary, job_experience_threshold_years, resume_path, job_limit):
+    # Derive URN dynamically from LinkedIn auth tokens in .env
+    user = get_user(os.getenv('LI_TOKEN'), os.getenv('JSESSION_ID'))
+    urn = user['urn']
+
     resume = docx_markdown(resume_path)
     # Reduced parameters to avoid combinatorial explosion
     PARAMS = { 
@@ -52,10 +60,10 @@ def job_sourcing_pipeline(keywords_full, minimum_yearly_salary, job_experience_t
     }
     URI = 'https://stupendous-choux-58c6b9.netlify.app/.netlify/functions/jobs'
 
-    data = batch_and_fetch(keywords_full, PARAMS, URI, job_limit)
-    data = upload_metadata(data)
+    data = batch_and_fetch(urn, keywords_full, PARAMS, URI, job_limit)
+    data = upload_metadata(urn, data)
     #data = load_collection("jobs-metadata")
-    output = upload_jobs(data, minimum_yearly_salary, job_experience_threshold_years, resume)
+    output = upload_jobs(urn, data, minimum_yearly_salary, job_experience_threshold_years, resume)
     return output
 
 
@@ -106,23 +114,13 @@ if __name__ == '__main__':
     import json
 
     # DEBUG: This block runs when script is executed directly (not via Flask)
-    # Parameters for direct execution: keywords_count=7, min_salary=96000, experience_threshold=4.5, resume_path=job-sourcing/other/text/resume.docx
     keywords_df = pd.read_csv("job-sourcing/other/text/keywords.csv")
     keywords_full = keywords_df['keyword'].tolist()[0:7]
-
     job_experience_threshold_years = 4.5
     minimum_yearly_salary = 96000
     resume_path = "job-sourcing/other/text/resume.docx"
     job_limit = 12
 
-    payload = {
-    "keywords": keywords_full,
-    "min_salary": minimum_yearly_salary,
-    "experience": job_experience_threshold_years,
-    "resume_path": resume_path,
-    "job_limit": job_limit,
-    }
-
-    # Executing job_sourcing_pipeline directly - this will run silently with no output
+    # URN is now resolved dynamically inside job_sourcing_pipeline via get_user()
     job_sourcing_pipeline(keywords_full, minimum_yearly_salary, job_experience_threshold_years, resume_path, job_limit)
     #app.run(debug=True, port=5000)
