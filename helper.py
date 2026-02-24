@@ -192,10 +192,9 @@ def run_pipeline(user):
     
     # Extract pipeline parameters from Firestore user payload
     
-    user_data = user
     urn = user['urn']
-    logger.info("Extracting pipeline parameters from user:", user_data)
-    payload = user_data.get('payload', {})
+    logger.info("Extracting pipeline parameters from user:", user, "with urn:", urn)
+    payload = user.get('payload', {})
     
     # Parameters now live under 'search_params' key in payload
     params = payload.get('search_params', {})
