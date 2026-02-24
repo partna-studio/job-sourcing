@@ -8,16 +8,13 @@ load_dotenv(dotenv_path=env_path)
 from digistudio.crawlers.linkedin import batch_urls, save_metadata, fetch_jobs
 from digistudio.processing.jobs import process_jobs, categorize_jobs 
 from digistudio.processing.upload import upload_collection
-from digistudio.processing.connections import check_ideal_status, get_user, get_all_users
+from digistudio.processing.connections import check_ideal_status, get_user
 from digistudio.processing.documents import docx_markdown
 from digistudio.integrations.firebase import get_firebase_client
 from datetime import timedelta, datetime as dt
 from pathlib import Path
 from typing import Union
 import pandas as pd
-from flask import Flask, request, jsonify
-from flask_cors import CORS
-import concurrent.futures
 
 
 LI_TOKEN = os.getenv('LI_TOKEN')
@@ -68,13 +65,19 @@ def get_resume_from_firestore(urn: str) -> Union[str, bytes]:
 
 def job_sourcing_pipeline(user):
     
-    
     keywords_full = user['payload']['keywords']
-    minimum_yearly_salary = user['payload']['minimum_yearly_salary']
-    job_experience_threshold_years = user['payload']['job_experience_threshold_years']
     urn = user['urn']
-    job_limit = user['payload']['job_limit']
 
+    try:
+        minimum_yearly_salary = int(user['payload'].get('minimum_yearly_salary', 0))
+        job_experience_threshold_years = int(user['payload'].get('job_experience_threshold_years', 0))
+        job_limit = int(user['payload'].get('job_limit', 10))
+    except (ValueError, TypeError) as e:
+        print(f"Error casting payload values: {e}")
+        # Handle error or set defaults
+        minimum_yearly_salary = 0
+        job_experience_threshold_years = 0
+        job_limit = 10
     
     # Fetch resume (either bytes or file path)
     resume = docx_markdown(get_resume_from_firestore(urn))
