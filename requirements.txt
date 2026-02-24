@@ -10,11 +10,13 @@ openpyxl
 ipykernel
 aiohttp
 markdownify
+webdriver_manager
 qdrant_client
 flask
 flask-cors
 pymongo
 nest_asyncio
 tqdm
+
 
 
