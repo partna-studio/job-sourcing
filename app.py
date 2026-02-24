@@ -32,6 +32,9 @@ client = get_firebase_client()
 app = Flask(__name__)
 CORS(app)
 
+@app.route('/')
+def health_check():
+    return {"status": "healthy", "message": "Crawler service is running"}, 200
 
 @app.route('/api/jobs', methods=['POST'])
 def jobs_endpoint():
