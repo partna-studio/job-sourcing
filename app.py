@@ -67,7 +67,7 @@ def get_resume_from_firestore(urn: str) -> Union[str, bytes]:
             return user_data["resume_data"]
     
     # Fallback to local resume if not found in Firestore
-    return "job-sourcing/other/text/resume.docx"
+    return "./other/text/resume.docx"
 
 def job_sourcing_pipeline(user):
     
@@ -304,30 +304,30 @@ def all_users_endpoint():
     return jsonify({"status": "completed", "results": results}), 200
 
 if __name__ == '__main__':
-    import pandas as pd
-    import requests
-    import json
+    #import pandas as pd
+    #import requests
+    #import json
 
     # DEBUG: This block runs when script is executed directly (not via Flask)
-    keywords_df = pd.read_csv("./other/text/keywords.csv")
-    keywords_full = keywords_df['keyword'].tolist()[0:7]
-    job_experience_threshold_years = 4.5
-    minimum_yearly_salary = 96000
-    job_limit = 12
+    #keywords_df = pd.read_csv("./other/text/keywords.csv")
+    #keywords_full = keywords_df['keyword'].tolist()[0:7]
+    #job_experience_threshold_years = 4.5
+    #minimum_yearly_salary = 96000
+    #job_limit = 12
 
     # Get user to extract URN (same as API flow)
-    user = get_user(LI_TOKEN, JSESSION_ID)
-    urn = user['urn']
+    #user = get_user(LI_TOKEN, JSESSION_ID)
+    #urn = user['urn']
 
 
-    payload = user.get('payload', {})
+    #payload = user.get('payload', {})
     
     # Parameters now live under 'search_params' key in payload
-    params = payload.get('search_params', {})
-    keywords_full = params.get('keywords', keywords_full)  # fallback to debug value if missing
-    minimum_yearly_salary = params.get('min_salary', minimum_yearly_salary)
-    job_experience_threshold_years = params.get('experience', job_experience_threshold_years)
-    job_limit = params.get('job_limit', job_limit)
+    #params = payload.get('search_params', {})
+    #keywords_full = params.get('keywords', keywords_full)  # fallback to debug value if missing
+    #minimum_yearly_salary = params.get('min_salary', minimum_yearly_salary)
+    #job_experience_threshold_years = params.get('experience', job_experience_threshold_years)
+    #job_limit = params.get('job_limit', job_limit)
 
     # Run pipeline using URN and fallback resume if needed
     #job_sourcing_pipeline(user)
