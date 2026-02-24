@@ -14,7 +14,7 @@ qdrant_client
 flask
 flask-cors
 pymongo
-playwright
 nest_asyncio
 tqdm
+
 
