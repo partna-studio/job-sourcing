@@ -69,21 +69,21 @@ def get_resume_from_firestore(urn: str) -> Union[str, bytes]:
     # Fallback to local resume if not found in Firestore
     return "job-sourcing/other/text/resume.docx"
 
-def job_sourcing_pipeline(keywords_full, minimum_yearly_salary, job_experience_threshold_years, urn, job_limit):
-    # Derive user from LinkedIn tokens
-    if not LI_TOKEN or not JSESSION_ID:
-        print("WARNING: LinkedIn tokens are missing from environment variables!")
-        # Don't call get_user yet, or handle the error gracefully
-    else:
-        user = get_user(LI_TOKEN, JSESSION_ID)
-    if user['urn'] != urn:
-        raise ValueError("User URN mismatch between auth and request")
+def job_sourcing_pipeline(user):
+    
+    
+    keywords_full = user['payload']['keywords']
+    minimum_yearly_salary = user['payload']['minimum_yearly_salary']
+    job_experience_threshold_years = user['payload']['job_experience_threshold_years']
+    urn = user['urn']
+    job_limit = user['payload']['job_limit']
+
     
     # Fetch resume (either bytes or file path)
     resume = docx_markdown(get_resume_from_firestore(urn))
     
-    # Extract search_params from user payload (now under 'params' key)
-    PARAMS = user['payload'].get('params', { 
+    # Extract search_params from user payload (now under 'search_params' key)
+    PARAMS = user['payload'].get('search_params', { 
         "location": ["New York City"],  # Reduced from 3 to 1
         "experience_level": ["Entry level", "Mid-Senior level"],  # Reduced from 3 to 2
         "remote": ["Remote" ,"Hybrid", "On Site"],  # Reduced from 3 to 1
@@ -137,7 +137,7 @@ def _process_single_user(user_doc, uri_override=None):
     try:
         urn = user_doc.get('urn')
         payload = user_doc.get('payload', {})
-        params = payload.get('params', {})
+        params = payload.get('search_params', {})
 
         # Extract params and apply fallbacks similar to run_pipeline
         keywords_full = params.get('keywords')
@@ -197,8 +197,8 @@ def run_pipeline(data):
     user_data = user
     payload = user_data.get('payload', {})
     
-    # Parameters now live under 'params' key in payload
-    params = payload.get('params', {})
+    # Parameters now live under 'search_params' key in payload
+    params = payload.get('search_params', {})
     keywords_full = params.get('keywords')
     minimum_yearly_salary = params.get('min_salary')
     job_experience_threshold_years = params.get('experience')
@@ -226,7 +226,7 @@ def run_pipeline(data):
     # Starting pipeline with parameters: keywords_count={len(keywords_full)}, min_salary={minimum_yearly_salary}, experience_threshold={job_experience_threshold_years}, urn={urn}
     # Pipeline will process jobs through: batch_and_fetch -> upload_metadata -> upload_jobs
     try:
-        result = job_sourcing_pipeline(keywords_full, minimum_yearly_salary, job_experience_threshold_years, urn, job_limit)
+        result = job_sourcing_pipeline(user)
         # Pipeline completed successfully. Result contains {len(result) if isinstance(result, list) else 'unknown'} categorized jobs
         return result
     except Exception as e:
@@ -320,16 +320,15 @@ if __name__ == '__main__':
     urn = user['urn']
 
 
-    user_data = user
-    payload = user_data.get('payload', {})
+    payload = user.get('payload', {})
     
-    # Parameters now live under 'params' key in payload
-    params = payload.get('params', {})
+    # Parameters now live under 'search_params' key in payload
+    params = payload.get('search_params', {})
     keywords_full = params.get('keywords', keywords_full)  # fallback to debug value if missing
     minimum_yearly_salary = params.get('min_salary', minimum_yearly_salary)
     job_experience_threshold_years = params.get('experience', job_experience_threshold_years)
     job_limit = params.get('job_limit', job_limit)
 
     # Run pipeline using URN and fallback resume if needed
-    #job_sourcing_pipeline(keywords_full, minimum_yearly_salary, job_experience_threshold_years, urn, job_limit)
+    #job_sourcing_pipeline(user)
     app.run(debug=True, port=5000)
