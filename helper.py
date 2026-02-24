@@ -212,20 +212,18 @@ def run_pipeline(user):
     if keywords_full is None or len(keywords_full) == 0:
         try:
             keywords_df = pd.read_csv("job-sourcing/other/text/keywords.csv")
-            keywords_full = keywords_df['keyword'].tolist()[0:7]
+            user['payload']['keywords'] = keywords_df['keyword'].tolist()[0:7]
         except Exception:
-            keywords_full = []  # still allow pipeline to run with empty list
+            user['payload']['keywords'] = []  # still allow pipeline to run with empty list
 
     # default salary/exposure values if not supplied or zero-ish
     if minimum_yearly_salary is None or minimum_yearly_salary == 0 or minimum_yearly_salary == '':
-        minimum_yearly_salary = 96000
+        user['payload']['min_salary'] = 96000
     if job_experience_threshold_years is None or job_experience_threshold_years == 0 or job_experience_threshold_years == '':
-        job_experience_threshold_years = 4.5
+        user['payload']['experience'] = 4.5
     if job_limit is None or job_limit == 0 or job_limit == '':
-        job_limit = 12
+        user['payload']['job_limit'] = 12
 
-    logger.info("Pipeline parameters for urn %s: keywords_count=%s, min_salary=%s, experience_threshold=%s, job_limit=%s",
-                urn, len(keywords_full), minimum_yearly_salary, job_experience_threshold_years, job_limit)
 
     # Starting pipeline with parameters: keywords_count={len(keywords_full)}, min_salary={minimum_yearly_salary}, experience_threshold={job_experience_threshold_years}, urn={urn}
     # Pipeline will process jobs through: batch_and_fetch -> upload_metadata -> upload_jobs
