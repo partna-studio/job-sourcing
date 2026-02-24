@@ -188,6 +188,53 @@ def _process_single_user(user_doc, uri_override=None):
         logger.exception("_process_single_user failed for urn %s", user_doc.get('urn'))
         return {"urn": user_doc.get('urn'), "status": "error", "error": str(e)}
 
+def use_defaults(user):
+    """
+    Cleans the user dictionary by filling nulls, empty strings, 
+    or empty lists with pipeline-safe defaults.
+    """
+    payload = user.get('payload', {})
+    
+    # 1. Keywords Fallback (CSV)
+    if not payload.get('keywords'):
+        try:
+            keywords_df = pd.read_csv("job-sourcing/other/text/keywords.csv")
+            payload['keywords'] = keywords_df['keyword'].tolist()[0:7]
+            logger.info(f"Defaults: Loaded keywords from CSV: {payload['keywords']}")
+        except Exception as e:
+            logger.error(f"Defaults: CSV load failed: {e}")
+            payload['keywords'] = ["Software Engineer"] # Hard fallback
+
+    # 2. Scalar Values (Salary, Experience, Limit)
+    # Using 'or' to catch None, 0, or empty string
+    payload['minimum_yearly_salary'] = payload.get('minimum_yearly_salary') or 96000
+    payload['job_experience_threshold_years'] = payload.get('job_experience_threshold_years') or 4.5
+    payload['job_limit'] = payload.get('job_limit') or 12
+
+    # 3. Search Params (Handling lists of empty strings)
+    sp = payload.get('search_params', {})
+    
+    defaults = {
+        "location": ["United States"],
+        "experience_level": ["Entry level", "Associate", "Mid-Senior level"],
+        "remote": ["Remote", "Hybrid"],
+        "job_type": ["Full-time"],
+        "easy_apply": ["True"]
+    }
+
+    for key, default_val in defaults.items():
+        # Check if key is missing, None, or a list containing only an empty string/None
+        current_val = sp.get(key)
+        if not current_val or current_val == [''] or current_val == [None]:
+            sp[key] = default_val
+            logger.debug(f"Defaults: Applied fallback for {key}: {default_val}")
+
+    # Re-assign back to ensure the dictionary is updated in place
+    payload['search_params'] = sp
+    user['payload'] = payload
+    
+    return user
+
 def run_pipeline(user):
     # Extract user auth tokens
    
@@ -195,36 +242,7 @@ def run_pipeline(user):
     # Extract pipeline parameters from Firestore user payload
     
     urn = user['urn']
-    payload = user.get('payload', {})
-    
-    # Parameters now live under 'search_params' key in payload
-    params = payload.get('search_params', {})
-    keywords_full = payload.get('keywords')
-    minimum_yearly_salary = payload.get('min_salary')
-    job_experience_threshold_years = payload.get('experience')
-    job_limit = payload.get('job_limit')
-
-    # ------------------------------------------------------------------
-    # apply fallback defaults similar to the debug entrypoint at bottom
-    # ------------------------------------------------------------------
-    # load keyword list from csv if none provided
-    if keywords_full is None or len(keywords_full) == 0:
-        try:
-            keywords_df = pd.read_csv("job-sourcing/other/text/keywords.csv")
-            user['payload']['keywords'] = keywords_df['keyword'].tolist()[0:7]
-        except Exception:
-            user['payload']['keywords'] = []  # still allow pipeline to run with empty list
-
-    # default salary/exposure values if not supplied or zero-ish
-    if minimum_yearly_salary is None or minimum_yearly_salary == 0 or minimum_yearly_salary == '':
-        user['payload']['min_salary'] = 96000
-    if job_experience_threshold_years is None or job_experience_threshold_years == 0 or job_experience_threshold_years == '':
-        user['payload']['experience'] = 4.5
-    if job_limit is None or job_limit == 0 or job_limit == '':
-        user['payload']['job_limit'] = 12
-
-    logger.info(f"Extracting pipeline parameters from user: {user} with urn: {urn}")
-
+    user = use_defaults(user)  # Ensure all parameters have defaults before running pipeline
     # Starting pipeline with parameters: keywords_count={len(keywords_full)}, min_salary={minimum_yearly_salary}, experience_threshold={job_experience_threshold_years}, urn={urn}
     # Pipeline will process jobs through: batch_and_fetch -> upload_metadata -> upload_jobs
     try:
