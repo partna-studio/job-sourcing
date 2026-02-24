@@ -51,7 +51,6 @@ def jobs_endpoint():
     # Get user to extract URN
     user = get_user(li_token, j_session_id)
     urn = user['urn']
-    
     # Check cache: if valid results exist within 7 days, return them
     cached_result = get_cached_jobs_from_firestore(urn)
     if cached_result is not None:
@@ -60,7 +59,7 @@ def jobs_endpoint():
     # Cache expired or not found → run pipeline synchronously
     try:
         logger.info("Starting pipeline for request")
-        result = run_pipeline(data)
+        result = run_pipeline(user)
         logger.info("Pipeline completed successfully")
         return jsonify({"status": "completed", "result": result}), 200
     except Exception as e:

@@ -186,23 +186,9 @@ def _process_single_user(user_doc, uri_override=None):
         logger.exception("_process_single_user failed for urn %s", user_doc.get('urn'))
         return {"urn": user_doc.get('urn'), "status": "error", "error": str(e)}
 
-def run_pipeline(data):
+def run_pipeline(user):
     # Extract user auth tokens
-    li_token = data.get('li_token')
-    j_session_id = data.get('j_session_id')
-    
-    if not li_token or not j_session_id:
-        logger.error("run_pipeline called without auth tokens")
-        raise ValueError("li_token and j_session_id are required")
-    
-    # Get user to extract URN
-    try:
-        user = get_user(li_token, j_session_id)
-        urn = user['urn']
-        #logger.info("run_pipeline invoked for urn %s", urn)
-    except Exception as e:
-        logger.exception("Failed to retrieve user profile during run_pipeline")
-        raise
+   
     
     # Extract pipeline parameters from Firestore user payload
     
