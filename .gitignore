@@ -24,6 +24,8 @@ service-account*.json
 downloads/
 data/
 other/data/
+other/template/
+other/test/
 *.pdf
 *.csv
 !job-sourcing/other/text/keywords.csv
