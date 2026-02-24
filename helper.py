@@ -193,7 +193,7 @@ def run_pipeline(user):
     # Extract pipeline parameters from Firestore user payload
     
     urn = user['urn']
-    logger.info("Extracting pipeline parameters from user:", user, "with urn:", urn)
+    logger.info(f"Extracting pipeline parameters from user: {user} with urn: {urn}")
     payload = user.get('payload', {})
     
     # Parameters now live under 'search_params' key in payload
@@ -207,7 +207,7 @@ def run_pipeline(user):
     # apply fallback defaults similar to the debug entrypoint at bottom
     # ------------------------------------------------------------------
     # load keyword list from csv if none provided
-    if not keywords_full:
+    if len(keywords_full) is None or len(keywords_full) == 0:
         try:
             keywords_df = pd.read_csv("job-sourcing/other/text/keywords.csv")
             keywords_full = keywords_df['keyword'].tolist()[0:7]
@@ -215,11 +215,11 @@ def run_pipeline(user):
             keywords_full = []  # still allow pipeline to run with empty list
 
     # default salary/exposure values if not supplied or zero-ish
-    if minimum_yearly_salary is None or minimum_yearly_salary == 0:
+    if minimum_yearly_salary is None or minimum_yearly_salary == 0 or minimum_yearly_salary == '':
         minimum_yearly_salary = 96000
-    if job_experience_threshold_years is None or job_experience_threshold_years == 0:
+    if job_experience_threshold_years is None or job_experience_threshold_years == 0 or job_experience_threshold_years == '':
         job_experience_threshold_years = 4.5
-    if job_limit is None or job_limit == 0:
+    if job_limit is None or job_limit == 0 or job_limit == '':
         job_limit = 12
 
     # Starting pipeline with parameters: keywords_count={len(keywords_full)}, min_salary={minimum_yearly_salary}, experience_threshold={job_experience_threshold_years}, urn={urn}
