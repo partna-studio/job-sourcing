@@ -1,5 +1,6 @@
 
 import os
+import logging
 from pathlib import Path
 from dotenv import load_dotenv
 # Load environment variables from .env file in the same directory
@@ -13,6 +14,14 @@ from pathlib import Path
 from flask import Flask, request, jsonify
 from flask_cors import CORS
 import concurrent.futures
+
+# configure logging for the whole module/app
+LOG_LEVEL = os.getenv('LOG_LEVEL', 'INFO').upper()
+logging.basicConfig(
+    level=LOG_LEVEL,
+    format='%(asctime)s %(levelname)s %(name)s %(message)s'
+)
+logger = logging.getLogger(__name__)
 
 
 LI_TOKEN = os.getenv('LI_TOKEN')
@@ -47,9 +56,12 @@ def jobs_endpoint():
     
     # Cache expired or not found → run pipeline synchronously
     try:
+        logger.info("Starting pipeline for request")
         result = run_pipeline(data)
+        logger.info("Pipeline completed successfully")
         return jsonify({"status": "completed", "result": result}), 200
     except Exception as e:
+        logger.exception("Pipeline failed")
         return jsonify({"error": f"Pipeline failed: {str(e)}"}), 500
 
 
@@ -77,10 +89,11 @@ def all_users_endpoint():
                 users = get_all_users(client)
         else:
             users = get_all_users(client)
-        print(f"Fetched {len(users)} users from Firestore for processing.")
+        logger.info("Fetched %d users from Firestore for processing.", len(users))
         if not users:
             return jsonify({"status": "empty", "message": "No users found"}), 200
     except Exception as e:
+        logger.exception("Failed to load users from Firestore")
         return jsonify({"error": f"Failed to load users: {e}"}), 500
 
     results = []
@@ -88,10 +101,22 @@ def all_users_endpoint():
     with concurrent.futures.ThreadPoolExecutor(max_workers=max_workers) as ex:
         futures = {ex.submit(_process_single_user, u, uri): u.get('urn') for u in users}
         for fut in concurrent.futures.as_completed(futures):
-            res = fut.result()
+            try:
+                res = fut.result()
+            except Exception as e:
+                urn = futures.get(fut)
+                logger.exception("Error processing user %s", urn)
+                res = {"urn": urn, "status": "error", "error": str(e)}
             results.append(res)
 
     return jsonify({"status": "completed", "results": results}), 200
+
+@app.errorhandler(Exception)
+def handle_unexpected_error(e):
+    """Catch-all handler that logs exception and returns generic message."""
+    logger.exception("Unhandled exception in Flask app")
+    return jsonify({"error": "Internal server error"}), 500
+
 
 if __name__ == '__main__':
     app.run(debug=True, port=5000)

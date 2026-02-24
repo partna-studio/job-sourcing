@@ -1,4 +1,5 @@
 import os
+import logging
 from pathlib import Path
 from dotenv import load_dotenv
 # Load environment variables from .env file in the same directory
@@ -21,6 +22,8 @@ LI_TOKEN = os.getenv('LI_TOKEN')
 JSESSION_ID = os.getenv('JSESSION_ID')
 
 client = get_firebase_client()
+
+logger = logging.getLogger(__name__)
 
 def batch_and_fetch (urn, keywords, params, uri, job_limit):
     all_jobs = batch_urls(keywords, params, job_limit)
@@ -73,7 +76,7 @@ def job_sourcing_pipeline(user):
         job_experience_threshold_years = user['payload'].get('job_experience_threshold_years', 0)
         job_limit = user['payload'].get('job_limit', 10)
     except (ValueError, TypeError) as e:
-        print(f"Error casting payload values: {e}")
+        logger.exception("Error casting payload values from user %s", urn)
         # Handle error or set defaults
         minimum_yearly_salary = 0
         job_experience_threshold_years = 0
@@ -108,6 +111,7 @@ def get_cached_jobs_from_firestore(urn: str):
     docs = client.find("jobs-display", {"id": urn}, limit=1)
     
     if not docs or len(docs) == 0:
+        logger.debug("No cached job document found for urn %s", urn)
         return None
     
     doc = docs[0]
@@ -118,9 +122,13 @@ def get_cached_jobs_from_firestore(urn: str):
     try:
         last_run = dt.fromisoformat(time_str)
         if dt.now() - last_run < timedelta(days=2):
+            logger.info("Returning cached results for urn %s (age %s)", urn, dt.now() - last_run)
             return doc.get("stats")  # Return cached results
+        else:
+            logger.debug("Cache expired for urn %s (age %s)", urn, dt.now() - last_run)
     except ValueError:
-        pass  # Invalid timestamp → treat as expired
+        logger.warning("Invalid timestamp in cache for urn %s: %s", urn, time_str)
+        # Invalid timestamp → treat as expired
     
     return None  # Expired or invalid
 
@@ -130,8 +138,9 @@ def _process_single_user(user_doc, uri_override=None):
     This mirrors `job_sourcing_pipeline` but skips the `get_user` URN check so it can
     be invoked for arbitrary user documents from Firestore.
     """
+    urn = user_doc.get('urn')
+    logger.info("_process_single_user started for urn %s", urn)
     try:
-        urn = user_doc.get('urn')
         payload = user_doc.get('payload', {})
         params = payload.get('search_params', {})
 
@@ -174,6 +183,7 @@ def _process_single_user(user_doc, uri_override=None):
 
         return {"urn": urn, "status": "completed", "result_count": len(output) if isinstance(output, list) else None}
     except Exception as e:
+        logger.exception("_process_single_user failed for urn %s", user_doc.get('urn'))
         return {"urn": user_doc.get('urn'), "status": "error", "error": str(e)}
 
 def run_pipeline(data):
@@ -182,11 +192,17 @@ def run_pipeline(data):
     j_session_id = data.get('j_session_id')
     
     if not li_token or not j_session_id:
+        logger.error("run_pipeline called without auth tokens")
         raise ValueError("li_token and j_session_id are required")
     
     # Get user to extract URN
-    user = get_user(li_token, j_session_id)
-    urn = user['urn']
+    try:
+        user = get_user(li_token, j_session_id)
+        urn = user['urn']
+        logger.info("run_pipeline invoked for urn %s", urn)
+    except Exception as e:
+        logger.exception("Failed to retrieve user profile during run_pipeline")
+        raise
     
     # Extract pipeline parameters from Firestore user payload
     
@@ -223,10 +239,11 @@ def run_pipeline(data):
     # Pipeline will process jobs through: batch_and_fetch -> upload_metadata -> upload_jobs
     try:
         result = job_sourcing_pipeline(user)
-        # Pipeline completed successfully. Result contains {len(result) if isinstance(result, list) else 'unknown'} categorized jobs
+        logger.info("job_sourcing_pipeline succeeded for urn %s, returned %s items", urn, len(result) if isinstance(result, list) else 'unknown')
         return result
     except Exception as e:
-        # Pipeline failed with error: {str(e)[:100]}... Check logs for full traceback. Parameters: keywords_count={len(keywords_full)}, min_salary={minimum_yearly_salary}, experience_threshold={job_experience_threshold_years}
+        logger.exception("job_sourcing_pipeline failed -- keywords_count=%s min_salary=%s experience_threshold=%s urn=%s", 
+                         len(keywords_full), minimum_yearly_salary, job_experience_threshold_years, urn)
         raise
 
 
