@@ -199,10 +199,10 @@ def run_pipeline(user):
     
     # Parameters now live under 'search_params' key in payload
     params = payload.get('search_params', {})
-    keywords_full = params.get('keywords')
-    minimum_yearly_salary = params.get('min_salary')
-    job_experience_threshold_years = params.get('experience')
-    job_limit = params.get('job_limit')
+    keywords_full = payload.get('keywords')
+    minimum_yearly_salary = payload.get('min_salary')
+    job_experience_threshold_years = payload.get('experience')
+    job_limit = payload.get('job_limit')
 
     # ------------------------------------------------------------------
     # apply fallback defaults similar to the debug entrypoint at bottom
@@ -211,17 +211,17 @@ def run_pipeline(user):
     if keywords_full is None or len(keywords_full) == 0:
         try:
             keywords_df = pd.read_csv("job-sourcing/other/text/keywords.csv")
-            user['payload']['search_params']['keywords'] = keywords_df['keyword'].tolist()[0:7]
+            user['payload']['keywords'] = keywords_df['keyword'].tolist()[0:7]
         except Exception:
-            user['payload']['search_params']['keywords'] = []  # still allow pipeline to run with empty list
+            user['payload']['keywords'] = []  # still allow pipeline to run with empty list
 
     # default salary/exposure values if not supplied or zero-ish
     if minimum_yearly_salary is None or minimum_yearly_salary == 0 or minimum_yearly_salary == '':
-        user['payload']['search_params']['min_salary'] = 96000
+        user['payload']['min_salary'] = 96000
     if job_experience_threshold_years is None or job_experience_threshold_years == 0 or job_experience_threshold_years == '':
-        user['payload']['search_params']['experience'] = 4.5
+        user['payload']['experience'] = 4.5
     if job_limit is None or job_limit == 0 or job_limit == '':
-        user['payload']['search_params']['job_limit'] = 12
+        user['payload']['job_limit'] = 12
 
     logger.info(f"Extracting pipeline parameters from user: {user} with urn: {urn}")
 
