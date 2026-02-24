@@ -23,6 +23,9 @@ import uuid
 import concurrent.futures
 
 
+LI_TOKEN = os.getenv('LI_TOKEN')
+JSESSION_ID = os.getenv('JSESSION_ID')
+
 client = get_firebase_client()
 
 def batch_and_fetch (urn, keywords, params, uri, job_limit):
@@ -68,7 +71,11 @@ def get_resume_from_firestore(urn: str) -> Union[str, bytes]:
 
 def job_sourcing_pipeline(keywords_full, minimum_yearly_salary, job_experience_threshold_years, urn, job_limit):
     # Derive user from LinkedIn tokens
-    user = get_user(os.getenv('LI_TOKEN'), os.getenv('JSESSION_ID'))
+    if not LI_TOKEN or not JSESSION_ID:
+        print("WARNING: LinkedIn tokens are missing from environment variables!")
+        # Don't call get_user yet, or handle the error gracefully
+    else:
+        user = get_user(LI_TOKEN, JSESSION_ID)
     if user['urn'] != urn:
         raise ValueError("User URN mismatch between auth and request")
     
@@ -309,7 +316,7 @@ if __name__ == '__main__':
     job_limit = 12
 
     # Get user to extract URN (same as API flow)
-    user = get_user(os.getenv('LI_TOKEN'), os.getenv('JSESSION_ID'))
+    user = get_user(LI_TOKEN, JSESSION_ID)
     urn = user['urn']
 
 
