@@ -207,7 +207,7 @@ def run_pipeline(user):
     # apply fallback defaults similar to the debug entrypoint at bottom
     # ------------------------------------------------------------------
     # load keyword list from csv if none provided
-    if len(keywords_full) is None or len(keywords_full) == 0:
+    if keywords_full is None or len(keywords_full) == 0:
         try:
             keywords_df = pd.read_csv("job-sourcing/other/text/keywords.csv")
             keywords_full = keywords_df['keyword'].tolist()[0:7]
