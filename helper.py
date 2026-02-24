@@ -224,6 +224,9 @@ def run_pipeline(user):
     if job_limit is None or job_limit == 0 or job_limit == '':
         job_limit = 12
 
+    logger.info("Pipeline parameters for urn %s: keywords_count=%s, min_salary=%s, experience_threshold=%s, job_limit=%s",
+                urn, len(keywords_full), minimum_yearly_salary, job_experience_threshold_years, job_limit)
+
     # Starting pipeline with parameters: keywords_count={len(keywords_full)}, min_salary={minimum_yearly_salary}, experience_threshold={job_experience_threshold_years}, urn={urn}
     # Pipeline will process jobs through: batch_and_fetch -> upload_metadata -> upload_jobs
     try:
