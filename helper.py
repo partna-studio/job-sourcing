@@ -69,9 +69,9 @@ def job_sourcing_pipeline(user):
     urn = user['urn']
 
     try:
-        minimum_yearly_salary = int(user['payload'].get('minimum_yearly_salary', 0))
-        job_experience_threshold_years = int(user['payload'].get('job_experience_threshold_years', 0))
-        job_limit = int(user['payload'].get('job_limit', 10))
+        minimum_yearly_salary = user['payload'].get('minimum_yearly_salary', 0)
+        job_experience_threshold_years = user['payload'].get('job_experience_threshold_years', 0)
+        job_limit = user['payload'].get('job_limit', 10)
     except (ValueError, TypeError) as e:
         print(f"Error casting payload values: {e}")
         # Handle error or set defaults
