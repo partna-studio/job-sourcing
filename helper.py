@@ -20,6 +20,7 @@ import pandas as pd
 
 LI_TOKEN = os.getenv('LI_TOKEN')
 JSESSION_ID = os.getenv('JSESSION_ID')
+DEFAULT_KEYWORDS_PATH = "./other/text/keywords.csv"
 
 client = get_firebase_client()
 
@@ -155,7 +156,7 @@ def _process_single_user(user_doc, uri_override=None):
 
         if not keywords_full:
             try:
-                keywords_df = pd.read_csv("job-sourcing/other/text/keywords.csv")
+                keywords_df = pd.read_csv(DEFAULT_KEYWORDS_PATH)
                 keywords_full = keywords_df['keyword'].tolist()[0:7]
             except Exception:
                 keywords_full = []
@@ -199,7 +200,7 @@ def use_defaults(user):
     # 1. Keywords Fallback (CSV)
     if not payload.get('keywords'):
         try:
-            keywords_df = pd.read_csv("job-sourcing/other/text/keywords.csv")
+            keywords_df = pd.read_csv(DEFAULT_KEYWORDS_PATH)
             payload['keywords'] = keywords_df['keyword'].tolist()[0:7]
             #logger.info(f"Defaults: Loaded keywords from CSV: {payload['keywords']}")
         except Exception as e:
@@ -262,7 +263,7 @@ if __name__ == '__main__':
     import json
 
     # DEBUG: This block runs when script is executed directly (not via Flask)
-    keywords_df = pd.read_csv("./other/text/keywords.csv")
+    keywords_df = pd.read_csv(DEFAULT_KEYWORDS_PATH)
     keywords_full = keywords_df['keyword'].tolist()[0:7]
     job_experience_threshold_years = 4.5
     minimum_yearly_salary = 96000
