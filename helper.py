@@ -29,7 +29,8 @@ def batch_and_fetch (urn, keywords, params, uri, job_limit):
     all_jobs = batch_urls(keywords, params, job_limit)
     data_entry = {"id": urn, "jobs": all_jobs, "time": dt.now().isoformat()}
     upload_collection(data_entry, "jobs-urls", 'jobs', user_id=urn)
-    logger.info("Batch URLs completed for urn %s, fetched %s jobs", urn, len(all_jobs) if all_jobs else 0)
+    job_count = len(all_jobs) if all_jobs is not None else 0
+    logger.info("Batch URLs completed for urn %s, fetched %s jobs", urn, job_count)
     data, failed = fetch_jobs(all_jobs, uri)
     #data = data[0:2]
     return data
