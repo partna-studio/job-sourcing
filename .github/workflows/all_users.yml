@@ -27,9 +27,17 @@ jobs:
           python-version: '3.10'
 
       - name: Install dependencies
+        env:
+          DIGISTUDIO_TOKEN: ${{ secrets.DIGISTUDIO_TOKEN }}
         run: |
+          # Replace the placeholder in requirements.txt with the actual token
+          sed -i "s/\${DIGISTUDIO_TOKEN}/$DIGISTUDIO_TOKEN/g" requirements.txt
+          
           pip install -r requirements.txt
-          pip install flask  # Ensure flask is installed
+          pip install flask
+
+      - name: Create .env file
+        run: echo "${{ secrets.ENV_FILE }}" > .env
 
       - name: Start Flask and Call API
         env:
