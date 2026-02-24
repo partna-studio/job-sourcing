@@ -17,6 +17,7 @@ flask-cors
 pymongo
 nest_asyncio
 tqdm
+linkedin-api
 
 
 
