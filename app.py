@@ -302,7 +302,7 @@ if __name__ == '__main__':
     import json
 
     # DEBUG: This block runs when script is executed directly (not via Flask)
-    keywords_df = pd.read_csv("job-sourcing/other/text/keywords.csv")
+    keywords_df = pd.read_csv("./other/text/keywords.csv")
     keywords_full = keywords_df['keyword'].tolist()[0:7]
     job_experience_threshold_years = 4.5
     minimum_yearly_salary = 96000
