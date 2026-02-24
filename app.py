@@ -9,16 +9,21 @@ import json
 from digistudio.crawlers.linkedin import batch_urls, save_metadata, fetch_jobs
 from digistudio.processing.jobs import process_jobs, categorize_jobs 
 from digistudio.processing.upload import upload_collection
-from digistudio.processing.connections import check_ideal_status, get_user
+from digistudio.processing.connections import check_ideal_status, get_user, get_all_users
 from digistudio.processing.documents import docx_markdown
-from datetime import datetime as dt
+from digistudio.integrations.firebase import get_firebase_client
+from datetime import timedelta, datetime as dt
 from pathlib import Path
 import nest_asyncio
+from typing import Union
 import pandas as pd
 from flask import Flask, request, jsonify
 from flask_cors import CORS
-import threading
 import uuid
+import concurrent.futures
+
+
+client = get_firebase_client()
 
 def batch_and_fetch (urn, keywords, params, uri, job_limit):
     all_jobs = batch_urls(keywords, params, job_limit)
@@ -44,20 +49,41 @@ def upload_jobs(urn, data,minimum_yearly_salary, job_experience_threshold_years,
     upload_collection(data_entry, "jobs-display", keyword='stats', user_id=urn)
     return output
 
-def job_sourcing_pipeline(keywords_full, minimum_yearly_salary, job_experience_threshold_years, resume_path, job_limit):
-    # Derive URN dynamically from LinkedIn auth tokens in .env
-    user = get_user(os.getenv('LI_TOKEN'), os.getenv('JSESSION_ID'))
-    urn = user['urn']
+def get_resume_from_firestore(urn: str) -> Union[str, bytes]:
+    """
+    Fetch resume data from Firestore.
+    If resume_data exists in user document, return bytes.
+    Otherwise, return path to fallback resume.docx.
+    """
+    
+    user_doc = client.find("users", {"urn": urn}, limit=1)
+    
+    if user_doc and len(user_doc) > 0:
+        user_data = user_doc[0]
+        if "resume_data" in user_data and isinstance(user_data["resume_data"], bytes):
+            return user_data["resume_data"]
+    
+    # Fallback to local resume if not found in Firestore
+    return "job-sourcing/other/text/resume.docx"
 
-    resume = docx_markdown(resume_path)
-    # Reduced parameters to avoid combinatorial explosion
-    PARAMS = { 
+def job_sourcing_pipeline(keywords_full, minimum_yearly_salary, job_experience_threshold_years, urn, job_limit):
+    # Derive user from LinkedIn tokens
+    user = get_user(os.getenv('LI_TOKEN'), os.getenv('JSESSION_ID'))
+    if user['urn'] != urn:
+        raise ValueError("User URN mismatch between auth and request")
+    
+    # Fetch resume (either bytes or file path)
+    resume = docx_markdown(get_resume_from_firestore(urn))
+    
+    # Extract search_params from user payload (now under 'params' key)
+    PARAMS = user['payload'].get('params', { 
         "location": ["New York City"],  # Reduced from 3 to 1
         "experience_level": ["Entry level", "Mid-Senior level"],  # Reduced from 3 to 2
         "remote": ["Remote" ,"Hybrid", "On Site"],  # Reduced from 3 to 1
         "job_type": ["Full-time"],  # Reduced from 2 to 1
         "easy_apply": [""]  # Removed easy_apply for now
-    }
+    })
+    
     URI = 'https://stupendous-choux-58c6b9.netlify.app/.netlify/functions/jobs'
 
     data = batch_and_fetch(urn, keywords_full, PARAMS, URI, job_limit)
@@ -70,17 +96,130 @@ def job_sourcing_pipeline(keywords_full, minimum_yearly_salary, job_experience_t
 app = Flask(__name__)
 CORS(app)
 
-def run_pipeline(data):
-    keywords_full = data.get('keywords', [])
-    minimum_yearly_salary = data.get('min_salary', 0)
-    job_experience_threshold_years = data.get('experience', 0)
-    resume_path = data.get('resume_path', '')
-    job_limit = data.get('job_limit', 10)
+def get_cached_jobs_from_firestore(urn: str):
+    """
+    Fetch cached job results from 'jobs-display' collection if within 7 days.
+    Returns: dict (the 'stats' field) or None if not found or expired.
+    """
+    docs = client.find("jobs-display", {"id": urn}, limit=1)
+    
+    if not docs or len(docs) == 0:
+        return None
+    
+    doc = docs[0]
+    time_str = doc.get("time")
+    if not time_str:
+        return None
+    
+    try:
+        last_run = dt.fromisoformat(time_str)
+        if dt.now() - last_run < timedelta(days=2):
+            return doc.get("stats")  # Return cached results
+    except ValueError:
+        pass  # Invalid timestamp → treat as expired
+    
+    return None  # Expired or invalid
 
-    # Starting pipeline with parameters: keywords_count={len(keywords_full)}, min_salary={minimum_yearly_salary}, experience_threshold={job_experience_threshold_years}, resume_path={resume_path}
+
+def _process_single_user(user_doc, uri_override=None):
+    """Run the sourcing pipeline steps for a single user document without LinkedIn re-auth.
+
+    This mirrors `job_sourcing_pipeline` but skips the `get_user` URN check so it can
+    be invoked for arbitrary user documents from Firestore.
+    """
+    try:
+        urn = user_doc.get('urn')
+        payload = user_doc.get('payload', {})
+        params = payload.get('params', {})
+
+        # Extract params and apply fallbacks similar to run_pipeline
+        keywords_full = params.get('keywords')
+        minimum_yearly_salary = params.get('min_salary')
+        job_experience_threshold_years = params.get('experience')
+        job_limit = params.get('job_limit')
+
+        if not keywords_full:
+            try:
+                keywords_df = pd.read_csv("job-sourcing/other/text/keywords.csv")
+                keywords_full = keywords_df['keyword'].tolist()[0:7]
+            except Exception:
+                keywords_full = []
+
+        if minimum_yearly_salary is None or minimum_yearly_salary == 0:
+            minimum_yearly_salary = 96000
+        if job_experience_threshold_years is None or job_experience_threshold_years == 0:
+            job_experience_threshold_years = 4.5
+        if job_limit is None or job_limit == 0:
+            job_limit = 12
+
+        # Ensure PARAMS structure contains expected keys (fallback to defaults used elsewhere)
+        PARAMS = params or {
+            "location": ["New York City"],
+            "experience_level": ["Entry level", "Mid-Senior level"],
+            "remote": ["Remote", "Hybrid", "On Site"],
+            "job_type": ["Full-time"],
+            "easy_apply": [""]
+        }
+
+        URI = uri_override or 'https://stupendous-choux-58c6b9.netlify.app/.netlify/functions/jobs'
+
+        # Run the core pipeline steps (without LinkedIn auth/URN validation)
+        data = batch_and_fetch(urn, keywords_full, PARAMS, URI, job_limit)
+        data = upload_metadata(urn, data)
+        resume = docx_markdown(get_resume_from_firestore(urn))
+        output = upload_jobs(urn, data, minimum_yearly_salary, job_experience_threshold_years, resume)
+
+        return {"urn": urn, "status": "completed", "result_count": len(output) if isinstance(output, list) else None}
+    except Exception as e:
+        return {"urn": user_doc.get('urn'), "status": "error", "error": str(e)}
+
+def run_pipeline(data):
+    # Extract user auth tokens
+    li_token = data.get('li_token')
+    j_session_id = data.get('j_session_id')
+    
+    if not li_token or not j_session_id:
+        raise ValueError("li_token and j_session_id are required")
+    
+    # Get user to extract URN
+    user = get_user(li_token, j_session_id)
+    urn = user['urn']
+    
+    # Extract pipeline parameters from Firestore user payload
+    
+    user_data = user
+    payload = user_data.get('payload', {})
+    
+    # Parameters now live under 'params' key in payload
+    params = payload.get('params', {})
+    keywords_full = params.get('keywords')
+    minimum_yearly_salary = params.get('min_salary')
+    job_experience_threshold_years = params.get('experience')
+    job_limit = params.get('job_limit')
+
+    # ------------------------------------------------------------------
+    # apply fallback defaults similar to the debug entrypoint at bottom
+    # ------------------------------------------------------------------
+    # load keyword list from csv if none provided
+    if not keywords_full:
+        try:
+            keywords_df = pd.read_csv("job-sourcing/other/text/keywords.csv")
+            keywords_full = keywords_df['keyword'].tolist()[0:7]
+        except Exception:
+            keywords_full = []  # still allow pipeline to run with empty list
+
+    # default salary/exposure values if not supplied or zero-ish
+    if minimum_yearly_salary is None or minimum_yearly_salary == 0:
+        minimum_yearly_salary = 96000
+    if job_experience_threshold_years is None or job_experience_threshold_years == 0:
+        job_experience_threshold_years = 4.5
+    if job_limit is None or job_limit == 0:
+        job_limit = 12
+
+    # Starting pipeline with parameters: keywords_count={len(keywords_full)}, min_salary={minimum_yearly_salary}, experience_threshold={job_experience_threshold_years}, urn={urn}
     # Pipeline will process jobs through: batch_and_fetch -> upload_metadata -> upload_jobs
     try:
-        result = job_sourcing_pipeline(keywords_full, minimum_yearly_salary, job_experience_threshold_years, resume_path, job_limit)
+        result = job_sourcing_pipeline(keywords_full, minimum_yearly_salary, job_experience_threshold_years, urn, job_limit)
         # Pipeline completed successfully. Result contains {len(result) if isinstance(result, list) else 'unknown'} categorized jobs
         return result
     except Exception as e:
@@ -94,19 +233,68 @@ def jobs_endpoint():
     if not data:
         return jsonify({"error": "No data provided"}), 400
     
-    # Create a dictionary to store results
-    job_results = {}
-    job_id = str(uuid.uuid4())
+    li_token = data.get('li_token')
+    j_session_id = data.get('j_session_id')
+    
+    if not li_token or not j_session_id:
+        return jsonify({"error": "li_token and j_session_id are required"}), 400
+    
+    # Get user to extract URN
+    user = get_user(li_token, j_session_id)
+    urn = user['urn']
+    
+    # Check cache: if valid results exist within 7 days, return them
+    cached_result = get_cached_jobs_from_firestore(urn)
+    if cached_result is not None:
+        return jsonify({"status": "cached", "result": cached_result}), 200
+    
+    # Cache expired or not found → run pipeline synchronously
+    try:
+        result = run_pipeline(data)
+        return jsonify({"status": "completed", "result": result}), 200
+    except Exception as e:
+        return jsonify({"error": f"Pipeline failed: {str(e)}"}), 500
 
-    def run_with_results():
-        job_results[job_id] = run_pipeline(data)
 
-    thread = threading.Thread(target=run_with_results)
-    thread.daemon = True  # Make thread a daemon so it doesn't prevent program exit
-    thread.start()
+@app.route('/api/all_users', methods=['POST'])
+def all_users_endpoint():
+    """Process multiple users concurrently.
 
-    # Return a placeholder resultendaited handling using a placeholder result
-    return jsonify({"status": "processing_started", "result": job_results}), 202
+    Request JSON (optional):
+      - max_workers: int (default 2)
+      - max_users: int (limit number of users to process)
+      - uri: str (override fetch URI)
+    """
+    data = request.get_json() or {}
+    max_workers = int(data.get('max_workers', 2))
+    max_users = data.get('max_users')
+    uri = data.get('uri')
+
+    # Use `get_all_users` from the job-connecting package instead of calling Firebase directly.
+    try:
+
+        if max_users:
+            try:
+                users = get_all_users(client, limit=int(max_users))
+            except Exception:
+                users = get_all_users(client)
+        else:
+            users = get_all_users(client)
+        print(f"Fetched {len(users)} users from Firestore for processing.")
+        if not users:
+            return jsonify({"status": "empty", "message": "No users found"}), 200
+    except Exception as e:
+        return jsonify({"error": f"Failed to load users: {e}"}), 500
+
+    results = []
+    # Use ThreadPoolExecutor for concurrent processing across users
+    with concurrent.futures.ThreadPoolExecutor(max_workers=max_workers) as ex:
+        futures = {ex.submit(_process_single_user, u, uri): u.get('urn') for u in users}
+        for fut in concurrent.futures.as_completed(futures):
+            res = fut.result()
+            results.append(res)
+
+    return jsonify({"status": "completed", "results": results}), 200
 
 if __name__ == '__main__':
     import pandas as pd
@@ -118,9 +306,23 @@ if __name__ == '__main__':
     keywords_full = keywords_df['keyword'].tolist()[0:7]
     job_experience_threshold_years = 4.5
     minimum_yearly_salary = 96000
-    resume_path = "job-sourcing/other/text/resume.docx"
     job_limit = 12
 
-    # URN is now resolved dynamically inside job_sourcing_pipeline via get_user()
-    job_sourcing_pipeline(keywords_full, minimum_yearly_salary, job_experience_threshold_years, resume_path, job_limit)
-    #app.run(debug=True, port=5000)
+    # Get user to extract URN (same as API flow)
+    user = get_user(os.getenv('LI_TOKEN'), os.getenv('JSESSION_ID'))
+    urn = user['urn']
+
+
+    user_data = user
+    payload = user_data.get('payload', {})
+    
+    # Parameters now live under 'params' key in payload
+    params = payload.get('params', {})
+    keywords_full = params.get('keywords', keywords_full)  # fallback to debug value if missing
+    minimum_yearly_salary = params.get('min_salary', minimum_yearly_salary)
+    job_experience_threshold_years = params.get('experience', job_experience_threshold_years)
+    job_limit = params.get('job_limit', job_limit)
+
+    # Run pipeline using URN and fallback resume if needed
+    #job_sourcing_pipeline(keywords_full, minimum_yearly_salary, job_experience_threshold_years, urn, job_limit)
+    app.run(debug=True, port=5000)

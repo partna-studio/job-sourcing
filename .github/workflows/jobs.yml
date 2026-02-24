@@ -1,0 +1,86 @@
+name: Run jobs endpoint (manual)
+
+on:
+  workflow_dispatch:
+    inputs:
+      use_secrets:
+        description: 'If true, use repository secrets LI_TOKEN and JSESSION_ID. Otherwise provide as inputs.'
+        required: false
+        default: 'true'
+      li_token:
+        description: 'LinkedIn li_at token (if not using secrets)'
+        required: false
+      j_session_id:
+        description: 'LinkedIn JSESSIONID (if not using secrets)'
+        required: false
+
+jobs:
+  call_jobs:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Call `/api/jobs`
+        env:
+          SERVICE_URL: ${{ secrets.SERVICE_URL }}
+          LI_TOKEN_INPUT: ${{ github.event.inputs.li_token || '' }}
+          JSESSION_INPUT: ${{ github.event.inputs.j_session_id || '' }}
+          USE_SECRETS: ${{ github.event.inputs.use_secrets || 'true' }}
+          LI_TOKEN_SECRET: ${{ secrets.LI_TOKEN }}
+          JSESSION_SECRET: ${{ secrets.JSESSION_ID }}
+          NOTIFY_WEBHOOK: ${{ secrets.NOTIFY_WEBHOOK || '' }}
+          RETRY_ATTEMPTS: ${{ secrets.RETRY_ATTEMPTS || '3' }}
+          RETRY_SLEEP: ${{ secrets.RETRY_SLEEP || '10' }}
+        run: |
+          set -e
+          if [ -z "$SERVICE_URL" ]; then
+            echo "ERROR: Set SERVICE_URL repository secret to the base URL of your service" >&2
+            exit 1
+          fi
+
+          if [ "$USE_SECRETS" = "true" ]; then
+            LI_TOKEN="$LI_TOKEN_SECRET"
+            JSESSION="$JSESSION_SECRET"
+          else
+            LI_TOKEN="$LI_TOKEN_INPUT"
+            JSESSION="$JSESSION_INPUT"
+          fi
+
+          if [ -z "$LI_TOKEN" ] || [ -z "$JSESSION" ]; then
+            echo "ERROR: LinkedIn tokens not provided" >&2
+            exit 1
+          fi
+
+          # Build JSON payload using shell
+          esc_li=$(printf '%s' "$LI_TOKEN" | sed 's/\\/\\\\/g; s/"/\\\"/g')
+          esc_js=$(printf '%s' "$JSESSION" | sed 's/\\/\\\\/g; s/"/\\\"/g')
+          PAYLOAD="{\"li_token\": \"${esc_li}\", \"j_session_id\": \"${esc_js}\"}"
+          echo "Calling $SERVICE_URL/api/jobs"
+
+          attempts=${RETRY_ATTEMPTS:-3}
+          sleep_seconds=${RETRY_SLEEP:-10}
+          attempt=1
+          HTTP=0
+          while [ $attempt -le $attempts ]; do
+            echo "Attempt $attempt/$attempts..."
+            HTTP=$(curl -sS -X POST "$SERVICE_URL/api/jobs" -H "Content-Type: application/json" -d "$PAYLOAD" -o response.json -w "%{http_code}") || true
+            echo "HTTP status: $HTTP"
+            if [ "$HTTP" -ge 200 ] && [ "$HTTP" -lt 300 ]; then
+              echo "Success (HTTP $HTTP)"
+              break
+            fi
+            echo "Request failed (HTTP $HTTP); sleeping ${sleep_seconds}s and retrying..."
+            attempt=$((attempt+1))
+            sleep $sleep_seconds
+          done
+
+          if [ "$attempt" -gt "$attempts" ] && [ -n "$NOTIFY_WEBHOOK" ]; then
+            # include the response body (base64-encoded) to avoid JSON nesting/escaping issues
+            if [ -f response.json ]; then
+              resp_b64=$(base64 -w0 response.json || base64 response.json | tr -d '\n')
+            else
+              resp_b64=""
+            fi
+            body=$(jq -c -n --arg wf "jobs" --arg status "failed" --arg http "$HTTP" --arg resp "$resp_b64" '{workflow: $wf, status: $status, http: $http, response_b64: $resp}')
+            curl -sS -X POST -H "Content-Type: application/json" -d "$body" "$NOTIFY_WEBHOOK" || true
+          fi
+
+          echo "Response body:" && cat response.json
