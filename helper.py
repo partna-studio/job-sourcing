@@ -193,6 +193,7 @@ def run_pipeline(user):
     # Extract pipeline parameters from Firestore user payload
     
     user_data = user
+    urn = user['urn']
     logger.info("Extracting pipeline parameters from user:", user_data)
     payload = user_data.get('payload', {})
     
