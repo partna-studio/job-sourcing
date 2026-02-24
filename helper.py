@@ -71,6 +71,7 @@ def get_resume_from_firestore(urn: str) -> Union[str, bytes]:
 def job_sourcing_pipeline(user):
     
     keywords_full = user['payload']['keywords']
+    logger.info("Pipeline started for urn %s with keywords: %s", user['urn'], len(keywords_full))
     urn = user['urn']
 
     try:
@@ -200,7 +201,7 @@ def use_defaults(user):
         try:
             keywords_df = pd.read_csv("job-sourcing/other/text/keywords.csv")
             payload['keywords'] = keywords_df['keyword'].tolist()[0:7]
-            logger.info(f"Defaults: Loaded keywords from CSV: {payload['keywords']}")
+            #logger.info(f"Defaults: Loaded keywords from CSV: {payload['keywords']}")
         except Exception as e:
             logger.error(f"Defaults: CSV load failed: {e}")
             payload['keywords'] = ["Software Engineer"] # Hard fallback
@@ -227,7 +228,7 @@ def use_defaults(user):
         current_val = sp.get(key)
         if not current_val or current_val == [''] or current_val == [None]:
             sp[key] = default_val
-            logger.debug(f"Defaults: Applied fallback for {key}: {default_val}")
+            #logger.debug(f"Defaults: Applied fallback for {key}: {default_val}")
 
     # Re-assign back to ensure the dictionary is updated in place
     payload['search_params'] = sp
