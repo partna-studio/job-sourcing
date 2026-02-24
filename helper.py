@@ -121,7 +121,7 @@ def get_cached_jobs_from_firestore(urn: str):
     
     try:
         last_run = dt.fromisoformat(time_str)
-        if dt.now() - last_run < timedelta(days=7):
+        if dt.now() - last_run < timedelta(days=1):
             logger.info("Returning cached results for urn %s (age %s)", urn, dt.now() - last_run)
             return doc.get("stats")  # Return cached results
         else:
