@@ -26,6 +26,7 @@ data/
 other/data/
 *.pdf
 *.csv
+!job-sourcing/other/text/keywords.csv
 *.xlsx
 
 # Logs
