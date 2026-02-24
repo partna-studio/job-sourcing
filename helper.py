@@ -199,7 +199,7 @@ def run_pipeline(data):
     try:
         user = get_user(li_token, j_session_id)
         urn = user['urn']
-        logger.info("run_pipeline invoked for urn %s", urn)
+        #logger.info("run_pipeline invoked for urn %s", urn)
     except Exception as e:
         logger.exception("Failed to retrieve user profile during run_pipeline")
         raise
@@ -207,6 +207,7 @@ def run_pipeline(data):
     # Extract pipeline parameters from Firestore user payload
     
     user_data = user
+    logger.info("Extracting pipeline parameters from user:", user_data)
     payload = user_data.get('payload', {})
     
     # Parameters now live under 'search_params' key in payload
