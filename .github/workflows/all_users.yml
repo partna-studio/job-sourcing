@@ -45,6 +45,7 @@ jobs:
           SERVICE_URL: http://localhost:5000
           MAX_WORKERS: ${{ github.event.inputs.max_workers || '2' }}
           MAX_USERS: ${{ github.event.inputs.max_users || '0' }}
+          NVIDIA_API_KEY: ${{ vars.NVIDIA_API_KEY }}
         run: |
           set -e
           
