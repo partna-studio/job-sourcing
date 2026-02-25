@@ -45,7 +45,7 @@ def upload_metadata(urn, data):
 def upload_jobs(urn, data,minimum_yearly_salary, job_experience_threshold_years, resume):
     jobs, statsistics = process_jobs(data, minimum_yearly_salary, job_experience_threshold_years, resume)
     data_entry = {"id": urn, "stats": statsistics, "time": dt.now().isoformat()}
-    upload_collection(data_entry, 'job-board', keyword='stats', compare_stats=True, user_id=urn)
+    upload_collection(data_entry, 'job-board', keyword='stats', user_id=urn)
     jobs = check_ideal_status(jobs, urn)
     output = categorize_jobs(jobs)
     data_entry = {"id": urn, "stats": output, "time": dt.now().isoformat()}
