@@ -21,6 +21,7 @@ import pandas as pd
 LI_TOKEN = os.getenv('LI_TOKEN')
 JSESSION_ID = os.getenv('JSESSION_ID')
 DEFAULT_KEYWORDS_PATH = "./other/text/keywords.csv"
+DEFAULT_PROMPT_PATH = "./other/text/prompt.txt"
 
 client = get_firebase_client()
 
@@ -43,7 +44,7 @@ def upload_metadata(urn, data):
     return data
 
 def upload_jobs(urn, data,minimum_yearly_salary, job_experience_threshold_years, resume):
-    jobs, statsistics = process_jobs(data, minimum_yearly_salary, job_experience_threshold_years, resume)
+    jobs, statsistics = process_jobs(data, minimum_yearly_salary, job_experience_threshold_years, resume, DEFAULT_PROMPT_PATH)
     data_entry = {"id": urn, "stats": statsistics, "time": dt.now().isoformat()}
     upload_collection(data_entry, 'job-board', keyword='stats', user_id=urn)
     jobs = check_ideal_status(jobs, urn)
