@@ -20,6 +20,7 @@ import pandas as pd
 
 LI_TOKEN = os.getenv('LI_TOKEN')
 JSESSION_ID = os.getenv('JSESSION_ID')
+NVIDIA_API_KEY = os.getenv("NVIDIA_API_KEY")
 DEFAULT_KEYWORDS_PATH = "./other/text/keywords.csv"
 DEFAULT_PROMPT_PATH = "./other/text/prompt.txt"
 
@@ -44,7 +45,7 @@ def upload_metadata(urn, data):
     return data
 
 def upload_jobs(urn, data,minimum_yearly_salary, job_experience_threshold_years, resume):
-    jobs, statsistics = process_jobs(data, minimum_yearly_salary, job_experience_threshold_years, resume, DEFAULT_PROMPT_PATH)
+    jobs, statsistics = process_jobs(data, minimum_yearly_salary, job_experience_threshold_years, resume, NVIDIA_API_KEY, DEFAULT_PROMPT_PATH)
     data_entry = {"id": urn, "stats": statsistics, "time": dt.now().isoformat()}
     upload_collection(data_entry, 'job-board', keyword='stats', user_id=urn)
     jobs = check_ideal_status(jobs, urn)
