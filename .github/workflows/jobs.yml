@@ -50,7 +50,7 @@ jobs:
           USE_SECRETS: ${{ github.event.inputs.use_secrets }}
           LI_TOKEN_SECRET: ${{ secrets.LI_TOKEN }}
           JSESSION_SECRET: ${{ secrets.JSESSION_ID }}
-          NVIDIA_API_KEY: ${{ vars.NVIDIA_API_KEY }}
+          NVIDIA_API_KEY: ${{ secrets.NVIDIA_API_KEY }}
         run: |
           set -e
           

@@ -24,6 +24,7 @@ NVIDIA_API_KEY = os.getenv("NVIDIA_API_KEY")
 DEFAULT_KEYWORDS_PATH = "./other/text/keywords.csv"
 DEFAULT_PROMPT_PATH = "./other/text/prompt.txt"
 
+#this is magic
 client = get_firebase_client()
 
 logger = logging.getLogger(__name__)
