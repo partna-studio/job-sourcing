@@ -9,7 +9,7 @@ load_dotenv(dotenv_path=env_path)
 from digistudio.crawlers.linkedin import batch_urls, save_metadata, fetch_jobs
 from digistudio.processing.jobs import process_jobs, categorize_jobs 
 from digistudio.processing.upload import upload_collection
-from digistudio.processing.connections import check_ideal_status, get_user
+from digistudio.processing.connections import check_ideal_status, get_user, linkedin_auth
 from digistudio.processing.documents import docx_markdown
 from digistudio.integrations.firebase import get_firebase_client
 from datetime import timedelta, datetime as dt
@@ -21,6 +21,8 @@ import pandas as pd
 LI_TOKEN = os.getenv('LI_TOKEN')
 JSESSION_ID = os.getenv('JSESSION_ID')
 DEFAULT_KEYWORDS_PATH = "./other/text/keywords.csv"
+NVIDIA_API_KEY = os.getenv('NVIDIA_API_KEY')
+PROMPT_PATH = "./other/text/prompt.txt"
 
 client = get_firebase_client()
 
@@ -43,7 +45,7 @@ def upload_metadata(urn, data):
     return data
 
 def upload_jobs(urn, data,minimum_yearly_salary, job_experience_threshold_years, resume):
-    jobs, statsistics = process_jobs(data, minimum_yearly_salary, job_experience_threshold_years, resume)
+    jobs, statsistics = process_jobs(data, minimum_yearly_salary, job_experience_threshold_years, resume, NVIDIA_API_KEY, PROMPT_PATH)
     data_entry = {"id": urn, "stats": statsistics, "time": dt.now().isoformat()}
     upload_collection(data_entry, 'job-board', keyword='stats', user_id=urn)
     api = linkedin_auth(LI_TOKEN,JSESSION_ID)
