@@ -20,11 +20,8 @@ import pandas as pd
 
 LI_TOKEN = os.getenv('LI_TOKEN')
 JSESSION_ID = os.getenv('JSESSION_ID')
-nvidia_key = os.getenv("NVIDIA_API_KEY")
 DEFAULT_KEYWORDS_PATH = "./other/text/keywords.csv"
-DEFAULT_PROMPT_PATH = "./other/text/prompt.txt"
 
-#this is magic
 client = get_firebase_client()
 
 logger = logging.getLogger(__name__)
@@ -46,10 +43,11 @@ def upload_metadata(urn, data):
     return data
 
 def upload_jobs(urn, data,minimum_yearly_salary, job_experience_threshold_years, resume):
-    jobs, statsistics = process_jobs(data, minimum_yearly_salary, job_experience_threshold_years, resume, nvidia_key, DEFAULT_PROMPT_PATH)
+    jobs, statsistics = process_jobs(data, minimum_yearly_salary, job_experience_threshold_years, resume)
     data_entry = {"id": urn, "stats": statsistics, "time": dt.now().isoformat()}
     upload_collection(data_entry, 'job-board', keyword='stats', user_id=urn)
-    jobs = check_ideal_status(jobs, urn)
+    api = linkedin_auth(LI_TOKEN,JSESSION_ID)
+    jobs = check_ideal_status(api, jobs)
     output = categorize_jobs(jobs)
     data_entry = {"id": urn, "stats": output, "time": dt.now().isoformat()}
     upload_collection(data_entry, "jobs-display", keyword='stats', user_id=urn)
@@ -247,13 +245,7 @@ def run_pipeline(user):
     # Extract pipeline parameters from Firestore user payload
     
     urn = user['urn']
-    user = use_defaults(user)
-    keywords_df = pd.read_csv(DEFAULT_KEYWORDS_PATH)
-    keywords_full = keywords_df['keyword'].tolist()[0:7]
-    job_experience_threshold_years = 4.5
-    minimum_yearly_salary = 96000
-    job_limit = 12
-    # Ensure all parameters have defaults before running pipeline
+    user = use_defaults(user)  # Ensure all parameters have defaults before running pipeline
     # Starting pipeline with parameters: keywords_count={len(keywords_full)}, min_salary={minimum_yearly_salary}, experience_threshold={job_experience_threshold_years}, urn={urn}
     # Pipeline will process jobs through: batch_and_fetch -> upload_metadata -> upload_jobs
     try:
@@ -264,3 +256,33 @@ def run_pipeline(user):
         logger.exception("job_sourcing_pipeline failed -- keywords_count=%s min_salary=%s experience_threshold=%s urn=%s", 
                          len(keywords_full), minimum_yearly_salary, job_experience_threshold_years, urn)
         raise
+
+
+if __name__ == '__main__':
+    import pandas as pd
+    import requests
+    import json
+
+    # DEBUG: This block runs when script is executed directly (not via Flask)
+    keywords_df = pd.read_csv(DEFAULT_KEYWORDS_PATH)
+    keywords_full = keywords_df['keyword'].tolist()[0:7]
+    job_experience_threshold_years = 4.5
+    minimum_yearly_salary = 96000
+    job_limit = 12
+
+    # Get user to extract URN (same as API flow)
+    user = get_user(LI_TOKEN, JSESSION_ID)
+    urn = user['urn']
+
+
+    payload = user.get('payload', {})
+    
+    # Parameters now live under 'search_params' key in payload
+    params = payload.get('search_params', {})
+    keywords_full = params.get('keywords', keywords_full)  # fallback to debug value if missing
+    minimum_yearly_salary = params.get('min_salary', minimum_yearly_salary)
+    job_experience_threshold_years = params.get('experience', job_experience_threshold_years)
+    job_limit = params.get('job_limit', job_limit)
+
+    # Run pipeline using URN and fallback resume if needed
+    job_sourcing_pipeline(user)
