@@ -30,54 +30,59 @@ jobs:
         env:
           DIGISTUDIO_TOKEN: ${{ secrets.DIGISTUDIO_TOKEN }}
         run: |
-          # Replace the placeholder in requirements.txt with the actual token
           sed -i "s/\${DIGISTUDIO_TOKEN}/$DIGISTUDIO_TOKEN/g" requirements.txt
-          
           pip install -r requirements.txt
           pip install flask
 
       - name: Create .env file
         run: echo "${{ secrets.ENV_FILE }}" > .env
-      
-      - name: Debug File Path
-        run: find . -name "*.csv"
         
       - name: Start Flask and Call API
         env:
           SERVICE_URL: http://localhost:5000
-          LI_TOKEN_INPUT: ${{ github.event.inputs.li_token }}
-          JSESSION_INPUT: ${{ github.event.inputs.j_session_id }}
+          # Map inputs and secrets to temp variables
+          INP_LI: ${{ github.event.inputs.li_token }}
+          INP_JS: ${{ github.event.inputs.j_session_id }}
+          SEC_LI: ${{ secrets.LI_TOKEN }}
+          SEC_JS: ${{ secrets.JSESSION_ID }}
           USE_SECRETS: ${{ github.event.inputs.use_secrets }}
-          LI_TOKEN_SECRET: ${{ secrets.LI_TOKEN }}
-          JSESSION_SECRET: ${{ secrets.JSESSION_ID }}
           NVIDIA_API_KEY: ${{ secrets.NVIDIA_API_KEY }}
         run: |
           set -e
-          
-          # Start Flask
-          python app.py & 
-          timeout 30s bash -c 'until curl -s localhost:5000 > /dev/null; do sleep 1; done'
 
-          # Determine Tokens
+          # 1. Determine which tokens to use and EXPORT them for the Python process
           if [ "$USE_SECRETS" = "true" ]; then
-            LI_TOKEN="$LI_TOKEN_SECRET"
-            JSESSION="$JSESSION_SECRET"
+            export LI_TOKEN="$SEC_LI"
+            export JSESSION_ID="$SEC_JS"
           else
-            LI_TOKEN="$LI_TOKEN_INPUT"
-            JSESSION="$JSESSION_INPUT"
+            export LI_TOKEN="$INP_LI"
+            export JSESSION_ID="$INP_JS"
           fi
 
-          # Build Payload
+          # 2. Start Flask (It will now inherit the exported LI_TOKEN and JSESSION_ID)
+          python app.py & 
+          
+          # 3. Wait for Flask to be ready
+          timeout 30s bash -c 'until curl -s localhost:5000 > /dev/null; do sleep 1; done'
+
+          # 4. Build Payload for the curl call
+          # Escaping quotes in case tokens contain them
           esc_li=$(printf '%s' "$LI_TOKEN" | sed 's/\\/\\\\/g; s/"/\\\"/g')
-          esc_js=$(printf '%s' "$JSESSION" | sed 's/\\/\\\\/g; s/"/\\\"/g')
+          esc_js=$(printf '%s' "$JSESSION_ID" | sed 's/\\/\\\\/g; s/"/\\\"/g')
           PAYLOAD="{\"li_token\": \"${esc_li}\", \"j_session_id\": \"${esc_js}\"}"
 
-          # Call API
-          HTTP=$(curl -sS -X POST "$SERVICE_URL/api/jobs" -H "Content-Type: application/json" -d "$PAYLOAD" -o response.json -w "%{http_code}") || true
+          # 5. Call API
+          echo "Calling API at $SERVICE_URL/api/jobs..."
+          HTTP=$(curl -sS -X POST "$SERVICE_URL/api/jobs" \
+            -H "Content-Type: application/json" \
+            -d "$PAYLOAD" \
+            -o response.json \
+            -w "%{http_code}") || true
           
           echo "HTTP status: $HTTP"
           cat response.json
 
           if [ "$HTTP" -lt 200 ] || [ "$HTTP" -ge 300 ]; then
+            echo "API call failed with status $HTTP"
             exit 1
           fi

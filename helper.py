@@ -18,10 +18,21 @@ from typing import Union
 import pandas as pd
 
 
-LI_TOKEN = os.getenv('LI_TOKEN')
-JSESSION_ID = os.getenv('JSESSION_ID')
+LI_TOKEN = os.environ.get('LI_TOKEN')
+JSESSION_ID = os.environ.get('JSESSION_ID')
+NVIDIA_API_KEY = os.environ.get('NVIDIA_API_KEY')
+
+# Critical Validation: Push back if the environment isn't ready
+missing_vars = [var for var, val in {
+    "LI_TOKEN": LI_TOKEN, 
+    "JSESSION_ID": JSESSION_ID, 
+    "NVIDIA_API_KEY": NVIDIA_API_KEY
+}.items() if not val]
+
+if missing_vars:
+    raise EnvironmentError(f"Missing required environment variables: {', '.join(missing_vars)}")
+
 DEFAULT_KEYWORDS_PATH = "./other/text/keywords.csv"
-NVIDIA_API_KEY = os.getenv('NVIDIA_API_KEY')
 PROMPT_PATH = "./other/text/prompt.txt"
 
 client = get_firebase_client()

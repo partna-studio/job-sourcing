@@ -24,8 +24,17 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 
-LI_TOKEN = os.getenv('LI_TOKEN')
-JSESSION_ID = os.getenv('JSESSION_ID')
+LI_TOKEN = os.environ.get('LI_TOKEN')
+JSESSION_ID = os.environ.get('JSESSION_ID')
+
+# Critical Validation: Push back if the environment isn't ready
+missing_vars = [var for var, val in {
+    "LI_TOKEN": LI_TOKEN, 
+    "JSESSION_ID": JSESSION_ID, 
+}.items() if not val]
+
+if missing_vars:
+    raise EnvironmentError(f"Missing required environment variables: {', '.join(missing_vars)}")
 
 client = get_firebase_client()
 
