@@ -7,7 +7,7 @@ from dotenv import load_dotenv
 env_path = Path(__file__).parent / '.env'
 load_dotenv(dotenv_path=env_path)
 
-from helper import _process_single_user, run_pipeline, get_cached_jobs_from_firestore
+from helper import run_pipeline, get_cached_jobs_from_firestore
 from digistudio.processing.connections import get_user, get_all_users
 from digistudio.integrations.firebase import get_firebase_client
 from pathlib import Path
