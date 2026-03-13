@@ -113,7 +113,7 @@ def all_users_endpoint():
     results = []
     # Use ThreadPoolExecutor for concurrent processing across users
     with concurrent.futures.ThreadPoolExecutor(max_workers=max_workers) as ex:
-        futures = {ex.submit(_process_single_user, u, uri, li_token, j_session_id): u.get('urn') for u in users}
+        futures = {ex.submit(run_pipeline, u): u.get('urn') for u in users}
         for fut in concurrent.futures.as_completed(futures):
             try:
                 res = fut.result()
