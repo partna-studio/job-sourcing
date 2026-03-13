@@ -43,6 +43,7 @@ CORS(app)
 
 @app.route('/')
 def health_check():
+    
     return {"status": "healthy", "message": "Crawler service is running"}, 200
 
 @app.route('/api/jobs', methods=['POST'])
@@ -89,6 +90,8 @@ def all_users_endpoint():
     max_workers = int(data.get('max_workers', 2))
     max_users = data.get('max_users')
     uri = data.get('uri')
+    li_token = data.get('li_token')
+    j_session_id = data.get('j_session_id')
 
     # Use `get_all_users` from the job-connecting package instead of calling Firebase directly.
     try:
@@ -110,7 +113,7 @@ def all_users_endpoint():
     results = []
     # Use ThreadPoolExecutor for concurrent processing across users
     with concurrent.futures.ThreadPoolExecutor(max_workers=max_workers) as ex:
-        futures = {ex.submit(_process_single_user, u, uri): u.get('urn') for u in users}
+        futures = {ex.submit(_process_single_user, u, uri, li_token, j_session_id): u.get('urn') for u in users}
         for fut in concurrent.futures.as_completed(futures):
             try:
                 res = fut.result()

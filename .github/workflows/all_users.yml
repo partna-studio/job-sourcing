@@ -2,17 +2,17 @@ name: Run all_users endpoint
 
 on:
   schedule:
-    - cron: '0 10 * * FRI'
+    - cron: "0 10 * * FRI"
   workflow_dispatch:
     inputs:
       max_workers:
-        description: 'Max workers'
+        description: "Max workers"
         required: false
-        default: '2'
+        default: "2"
       max_users:
-        description: 'Max users (0 = all)'
+        description: "Max users (0 = all)"
         required: false
-        default: '0'
+        default: "0"
 
 jobs:
   call_all_users:
@@ -24,15 +24,13 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
-          python-version: '3.12'
+          python-version: "3.12"
 
       - name: Install dependencies
         env:
           DIGISTUDIO_TOKEN: ${{ secrets.DIGISTUDIO_TOKEN }}
         run: |
-          # Replace the placeholder in requirements.txt with the actual token
           sed -i "s/\${DIGISTUDIO_TOKEN}/$DIGISTUDIO_TOKEN/g" requirements.txt
-          
           pip install -r requirements.txt
           pip install flask
 
@@ -43,31 +41,51 @@ jobs:
         env:
           # Uses localhost for the internal runner
           SERVICE_URL: http://localhost:5000
+          INP_LI: ${{ github.event.inputs.li_token }}
+          INP_JS: ${{ github.event.inputs.j_session_id }}
+          SEC_LI: ${{ secrets.LI_TOKEN }}
+          SEC_JS: ${{ secrets.JSESSION_ID }}
           MAX_WORKERS: ${{ github.event.inputs.max_workers || '2' }}
           MAX_USERS: ${{ github.event.inputs.max_users || '0' }}
           NVIDIA_API_KEY: ${{ secrets.NVIDIA_API_KEY }}
         run: |
           set -e
-          
+
+          # 1. Determine which tokens to use and EXPORT them for the Python process
+          if [ "$USE_SECRETS" = "true" ]; then
+            export LI_TOKEN="$SEC_LI"
+            export JSESSION_ID="$SEC_JS"
+          else
+            export LI_TOKEN="$INP_LI"
+            export JSESSION_ID="$INP_JS"
+          fi
+
           # 1. Start Flask in background
           python app.py & 
-          
-          # 2. Wait for Flask to be ready (up to 30s)
-          echo "Waiting for Flask to start on port 5000..."
-          timeout 30s bash -c 'until curl -s localhost:5000 > /dev/null; do sleep 1; done' || (echo "Flask failed to start" && exit 1)
+
+          # 2. Wait for Flask to be ready
+          timeout 30s bash -c 'until curl -s localhost:5000 > /dev/null; do sleep 1; done'
 
           # 3. Build Payload
           PAYLOAD="{\"max_workers\": ${MAX_WORKERS}"
-          [ "${MAX_USERS}" -gt 0 ] && PAYLOAD="${PAYLOAD},\"max_users\": ${MAX_USERS}"
+          if [ "${MAX_USERS}" -gt 0 ]; then
+            PAYLOAD="${PAYLOAD}, \"max_users\": ${MAX_USERS}"
+          fi
           PAYLOAD="${PAYLOAD}}"
 
-          # 4. Execution Loop
-          HTTP=$(curl -sS -X POST "$SERVICE_URL/api/all_users" -H "Content-Type: application/json" -d "$PAYLOAD" -o response.json -w "%{http_code}") || true
-          
+          # 4. Call API
+          echo "Calling API at $SERVICE_URL/api/all_users..."
+          HTTP=$(curl -sS -X POST "$SERVICE_URL/api/all_users" \
+            -H "Content-Type: application/json" \
+            -d "$PAYLOAD" \
+            -o response.json \
+            -w "%{http_code}") || true
+
           echo "HTTP status: $HTTP"
           cat response.json
 
           # 5. Exit Check
           if [ "$HTTP" -lt 200 ] || [ "$HTTP" -ge 300 ]; then
+            echo "API call failed with status $HTTP"
             exit 1
           fi

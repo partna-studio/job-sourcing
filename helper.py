@@ -158,39 +158,27 @@ def _process_single_user(user_doc, uri_override=None):
     """
     urn = user_doc.get('urn')
     logger.info("_process_single_user started for urn %s", urn)
+    
+    # Check cache first (similar to jobs_endpoint)
+    cached_result = get_cached_jobs_from_firestore(urn)
+    if cached_result is not None:
+        logger.info("Found cached results for urn %s in _process_single_user", urn)
+        return {"urn": urn, "status": "cached", "result": cached_result}
+
     try:
+        # Standardize user object with defaults
+        user_doc = use_defaults(user_doc)
+        
         payload = user_doc.get('payload', {})
-        params = payload.get('search_params', {})
+        sp = payload.get('search_params', {})
 
-        # Extract params and apply fallbacks similar to run_pipeline
-        keywords_full = params.get('keywords')
-        minimum_yearly_salary = params.get('min_salary')
-        job_experience_threshold_years = params.get('experience')
-        job_limit = params.get('job_limit')
+        # Extract params from standardized payload
+        keywords_full = payload.get('keywords')
+        minimum_yearly_salary = payload.get('minimum_yearly_salary')
+        job_experience_threshold_years = payload.get('job_experience_threshold_years')
+        job_limit = payload.get('job_limit')
 
-        if not keywords_full:
-            try:
-                keywords_df = pd.read_csv(DEFAULT_KEYWORDS_PATH)
-                keywords_full = keywords_df['keyword'].tolist()[0:7]
-            except Exception:
-                keywords_full = []
-
-        if minimum_yearly_salary is None or minimum_yearly_salary == 0:
-            minimum_yearly_salary = 96000
-        if job_experience_threshold_years is None or job_experience_threshold_years == 0:
-            job_experience_threshold_years = 4.5
-        if job_limit is None or job_limit == 0:
-            job_limit = 12
-
-        # Ensure PARAMS structure contains expected keys (fallback to defaults used elsewhere)
-        PARAMS = params or {
-            "location": ["New York City"],
-            "experience_level": ["Entry level", "Mid-Senior level"],
-            "remote": ["Remote", "Hybrid", "On Site"],
-            "job_type": ["Full-time"],
-            "easy_apply": [""]
-        }
-
+        PARAMS = sp
         URI = uri_override or 'https://stupendous-choux-58c6b9.netlify.app/.netlify/functions/jobs'
 
         # Run the core pipeline steps (without LinkedIn auth/URN validation)
@@ -199,10 +187,10 @@ def _process_single_user(user_doc, uri_override=None):
         resume = docx_markdown(get_resume_from_firestore(urn))
         output = upload_jobs(urn, data, minimum_yearly_salary, job_experience_threshold_years, resume)
 
-        return {"urn": urn, "status": "completed", "result_count": len(output) if isinstance(output, list) else None}
+        return {"urn": urn, "status": "completed", "result": output}
     except Exception as e:
-        logger.exception("_process_single_user failed for urn %s", user_doc.get('urn'))
-        return {"urn": user_doc.get('urn'), "status": "error", "error": str(e)}
+        logger.exception("_process_single_user failed for urn %s", urn)
+        return {"urn": urn, "status": "error", "error": str(e)}
 
 def use_defaults(user):
     """
