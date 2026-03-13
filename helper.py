@@ -167,25 +167,7 @@ def _process_single_user(user_doc, uri_override=None):
 
     try:
         # Standardize user object with defaults
-        user_doc = use_defaults(user_doc)
-        
-        payload = user_doc.get('payload', {})
-        sp = payload.get('search_params', {})
-
-        # Extract params from standardized payload
-        keywords_full = payload.get('keywords')
-        minimum_yearly_salary = payload.get('minimum_yearly_salary')
-        job_experience_threshold_years = payload.get('job_experience_threshold_years')
-        job_limit = payload.get('job_limit')
-
-        PARAMS = sp
-        URI = uri_override or 'https://stupendous-choux-58c6b9.netlify.app/.netlify/functions/jobs'
-
-        # Run the core pipeline steps (without LinkedIn auth/URN validation)
-        data = batch_and_fetch(urn, keywords_full, PARAMS, URI, job_limit)
-        data = upload_metadata(urn, data)
-        resume = docx_markdown(get_resume_from_firestore(urn))
-        output = upload_jobs(urn, data, minimum_yearly_salary, job_experience_threshold_years, resume)
+        output = run_pipeline(user_doc)
 
         return {"urn": urn, "status": "completed", "result": output}
     except Exception as e:
