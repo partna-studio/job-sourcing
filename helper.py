@@ -236,8 +236,8 @@ def run_pipeline(user):
         logger.info("job_sourcing_pipeline succeeded for urn %s, returned %s items", urn, len(result) if isinstance(result, list) else 'unknown')
         return result
     except Exception as e:
-        logger.exception("job_sourcing_pipeline failed -- keywords_count=%s min_salary=%s experience_threshold=%s urn=%s", 
-                         len(keywords_full), minimum_yearly_salary, job_experience_threshold_years, urn)
+        logger.exception("job_sourcing_pipeline failed -- min_salary=%s experience_threshold=%s urn=%s", 
+                         minimum_yearly_salary, job_experience_threshold_years, urn)
         raise
 
 
