@@ -8,7 +8,7 @@ load_dotenv(dotenv_path=env_path)
 
 from digistudio.crawlers.linkedin import batch_urls, save_metadata, fetch_jobs
 from digistudio.processing.jobs import process_jobs, categorize_jobs 
-from digistudio.processing.upload import upload_collection
+from digistudio.processing.upload import upload_collection, upload_display_collection
 from digistudio.processing.connections import check_ideal_status, get_user, linkedin_auth
 from digistudio.processing.documents import docx_markdown
 from digistudio.integrations.firebase import get_firebase_client
@@ -63,7 +63,7 @@ def upload_jobs(urn, data,minimum_yearly_salary, job_experience_threshold_years,
     jobs = check_ideal_status(api, jobs)
     output = categorize_jobs(jobs)
     data_entry = {"id": urn, "stats": output, "time": dt.now().isoformat()}
-    upload_collection(data_entry, "jobs-display", keyword='stats', user_id=urn)
+    upload_display_collection(data_entry, "jobs-display", user_id=urn)
     return output
 
 def get_resume_from_firestore(urn: str) -> Union[str, bytes]:
