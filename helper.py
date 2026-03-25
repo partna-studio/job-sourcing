@@ -16,6 +16,7 @@ from datetime import timedelta, datetime as dt
 from pathlib import Path
 from typing import Union
 import pandas as pd
+import json
 
 
 LI_TOKEN = os.environ.get('LI_TOKEN')
@@ -63,6 +64,8 @@ def upload_jobs(urn, data,minimum_yearly_salary, job_experience_threshold_years,
     jobs = check_ideal_status(api, jobs)
     output = categorize_jobs(jobs)
     data_entry = {"id": urn, "stats": output, "time": dt.now().isoformat()}
+    with open("data.json", "w") as f:
+        json.dump(data_entry, f, indent=2)
     upload_display_collection(data_entry, "jobs-display", user_id=urn)
     return output
 
