@@ -65,6 +65,7 @@ def upload_jobs(urn, data,minimum_yearly_salary, job_experience_threshold_years,
     jobs = check_ideal_status(api, jobs)
     output = categorize_jobs(jobs)
     data_entry = {"id": urn, "stats": output, "time": dt.now().isoformat()}
+    upload_collection(data_entry, 'job-new', keyword='stats', user_id=urn)
     with open(path, "w") as f:
         json.dump(data_entry, f, indent=2)
     logger.info("Database saved to json at %s", path)
