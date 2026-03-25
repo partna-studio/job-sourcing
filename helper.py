@@ -35,6 +35,7 @@ if missing_vars:
 
 DEFAULT_KEYWORDS_PATH = "./other/text/keywords.csv"
 PROMPT_PATH = "./other/text/prompt.txt"
+path = os.path.join(os.environ.get("GITHUB_WORKSPACE", "."), "data.json")
 
 client = get_firebase_client()
 
@@ -64,7 +65,7 @@ def upload_jobs(urn, data,minimum_yearly_salary, job_experience_threshold_years,
     jobs = check_ideal_status(api, jobs)
     output = categorize_jobs(jobs)
     data_entry = {"id": urn, "stats": output, "time": dt.now().isoformat()}
-    with open("data.json", "w") as f:
+    with open(path, "w") as f:
         json.dump(data_entry, f, indent=2)
     upload_display_collection(data_entry, "jobs-display", user_id=urn)
     return output
