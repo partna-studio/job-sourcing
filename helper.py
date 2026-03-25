@@ -67,6 +67,7 @@ def upload_jobs(urn, data,minimum_yearly_salary, job_experience_threshold_years,
     data_entry = {"id": urn, "stats": output, "time": dt.now().isoformat()}
     with open(path, "w") as f:
         json.dump(data_entry, f, indent=2)
+    logger.info("Database saved to json at %s", path)
     upload_display_collection(data_entry, "jobs-display", user_id=urn)
     return output
 
